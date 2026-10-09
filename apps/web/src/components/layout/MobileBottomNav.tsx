@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { clearAuthToken, readAuthToken } from "@/lib/auth/token-storage";
-import { Button } from "../ui/Button";
+import { clearAuthToken } from "@/lib/auth/token-storage";
 
 interface MobileBottomNavProps {
   isAuthenticated: boolean;

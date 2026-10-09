@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DashboardPanel } from "@/components/dashboard/DashboardPanel";
 
 export const metadata: Metadata = {
-  title: "Dashboard | Tix",
+  title: "Dashboard",
   description: "Quick actions for your ticket marketplace activity."
 };
 

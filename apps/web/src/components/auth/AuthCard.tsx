@@ -12,7 +12,7 @@ import {
   resendVerificationEmail
 } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
-import { saveAuthToken } from "@/lib/auth/token-storage";
+import { safeReturnTo, saveAuthToken } from "@/lib/auth/token-storage";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -43,7 +43,7 @@ export function AuthCard({ mode }: AuthCardProps) {
   const hasNumber = /\d/.test(password);
   const passwordsMatch = password === confirmPassword;
   const googleEnabled = enabledOAuthProviders.includes("google");
-  const returnTo = searchParams.get("returnTo");
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
 
   useEffect(() => {
     getOAuthProviders()
@@ -134,7 +134,7 @@ export function AuthCard({ mode }: AuthCardProps) {
         <p className="muted-text text-sm leading-6">
           {isRegisterMode
             ? "Join the marketplace to buy, sell, and coordinate tickets quickly."
-            : "Continue to your dashboard, listings, and event chats."}
+            : "Continue to your dashboard, listings, and wishlist."}
         </p>
       </div>
 
@@ -286,7 +286,9 @@ export function AuthCard({ mode }: AuthCardProps) {
       <p className="muted-text mt-6 text-center text-sm">
         {isRegisterMode ? "Already have an account? " : "Need an account? "}
         <Link
-          href={isRegisterMode ? "/auth/login" : "/auth/register"}
+          href={`${isRegisterMode ? "/auth/login" : "/auth/register"}${
+            returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""
+          }`}
           className="text-[var(--foreground)] underline underline-offset-4"
         >
           {isRegisterMode ? "Log in" : "Create one"}

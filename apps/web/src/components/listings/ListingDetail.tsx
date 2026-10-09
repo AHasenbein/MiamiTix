@@ -17,6 +17,9 @@ import { EventImagePicker } from "../ui/EventImagePicker";
 import { Input } from "../ui/Input";
 import { SurfaceCard } from "../ui/SurfaceCard";
 
+// Mirrors the API's per-request cap (purchaseSchema in listing-routes.ts).
+const MAX_TICKETS_PER_REQUEST = 10;
+
 interface ListingDetailProps {
   listingId: string;
 }
@@ -109,8 +112,13 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
     }
 
     const parsedQuantity = Number(quantity);
+    const maxRequestable = Math.min(MAX_TICKETS_PER_REQUEST, listing.quantity);
     if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
       setErrorMessage("Enter a valid ticket quantity.");
+      return;
+    }
+    if (parsedQuantity > maxRequestable) {
+      setErrorMessage(`You can request up to ${maxRequestable} ticket${maxRequestable === 1 ? "" : "s"}.`);
       return;
     }
     if (phone.trim().length < 7) {
@@ -155,7 +163,8 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
     setErrorMessage("");
     setMessage("");
     try {
-      let uploadedEventImageUrl = eventImageUrl || undefined;
+      // An empty string tells the API to clear the image (undefined would leave it unchanged).
+      let uploadedEventImageUrl = eventImageUrl;
       if (eventImageDataToUpload) {
         uploadedEventImageUrl = await uploadEventImage(eventImageDataToUpload, token);
       }
@@ -173,7 +182,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
       setEditTitle(updated.title);
       setEditPrice((updated.priceCents / 100).toFixed(2));
       setEditQuantity(String(updated.quantity));
-      setEventImageUrl(uploadedEventImageUrl ?? "");
+      setEventImageUrl(uploadedEventImageUrl);
       setEventImageDataToUpload("");
       setMessage("Listing updated.");
     } catch (error) {
@@ -236,13 +245,23 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
 
   const canEditListing = Boolean(currentUserId) && (currentUserId === listing.sellerId || isTopTrustedSeller);
   const canDeleteListing = currentUserId === listing.sellerId;
+  const isSoldOut = listing.soldOut || listing.quantity <= 0;
 
   return (
     <SurfaceCard className="grid max-w-xl gap-4 p-5 sm:p-8">
       <nav className="flex items-center gap-2 text-sm">
-        <Link href="/listings/mine" className="muted-text underline underline-offset-4">
-          My listings
-        </Link>
+        {canDeleteListing ? (
+          <Link href="/listings/mine" className="muted-text underline underline-offset-4">
+            My listings
+          </Link>
+        ) : (
+          <Link
+            href={`/events/${listing.eventId}`}
+            className="muted-text underline underline-offset-4"
+          >
+            Back to event
+          </Link>
+        )}
         <span className="muted-text">/</span>
         <span className="muted-text">Listing details</span>
       </nav>
@@ -272,7 +291,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
       <form className="grid gap-3" onSubmit={handlePurchase}>
         <Input
           label="Tickets requested"
-          max={Math.max(1, listing.quantity)}
+          max={Math.max(1, Math.min(MAX_TICKETS_PER_REQUEST, listing.quantity))}
           min={1}
           onChange={(event) => setQuantity(event.target.value)}
           required
@@ -287,8 +306,8 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
           type="tel"
           value={phone}
         />
-        <Button disabled={isSubmitting || listing.soldOut || listing.quantity <= 0} type="submit">
-          {isSubmitting ? "Sending request..." : "Request tickets"}
+        <Button disabled={isSubmitting || isSoldOut} type="submit">
+          {isSoldOut ? "Sold out" : isSubmitting ? "Sending request..." : "Request tickets"}
         </Button>
       </form>
       {canEditListing ? (
@@ -369,9 +388,19 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
       ) : null}
       {message ? <Alert tone="success">{message}</Alert> : null}
       {message ? (
-        <ButtonLink href="/listings/mine" variant="secondary" className="w-full sm:w-auto">
-          Return to my listings
-        </ButtonLink>
+        canDeleteListing ? (
+          <ButtonLink href="/listings/mine" variant="secondary" className="w-full sm:w-auto">
+            Return to my listings
+          </ButtonLink>
+        ) : (
+          <ButtonLink
+            href={`/events/${listing.eventId}`}
+            variant="secondary"
+            className="w-full sm:w-auto"
+          >
+            Back to event
+          </ButtonLink>
+        )
       ) : null}
       {errorMessage ? <Alert tone="error" announce="assertive">{errorMessage}</Alert> : null}
     </SurfaceCard>

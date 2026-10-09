@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/lib/api/auth";
+import { ApiClientError } from "@/lib/api/client";
 import { clearAuthToken, readAuthToken } from "@/lib/auth/token-storage";
 import { Button } from "../ui/Button";
 import { ButtonLink } from "../ui/ButtonLink";
@@ -45,7 +46,16 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
       }
       void getCurrentUser(token)
         .then((response) => setCanSell(response.user.isTrustedSeller))
-        .catch(() => setCanSell(false));
+        .catch((error) => {
+          setCanSell(false);
+          // Expired/invalid session: drop the stale token so the UI stops looking logged in.
+          // Network errors (status 0) keep the token.
+          if (error instanceof ApiClientError && error.statusCode === 401) {
+            clearAuthToken();
+            setIsAuthenticated(false);
+            onAuthChange?.(false);
+          }
+        });
     };
 
     syncAuthState();

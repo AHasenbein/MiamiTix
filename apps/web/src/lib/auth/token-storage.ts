@@ -23,3 +23,11 @@ export function clearAuthToken(): void {
 
   window.localStorage.removeItem(AUTH_TOKEN_KEY);
 }
+
+/** Only allow same-site relative paths as post-login redirects (blocks open redirects). */
+export function safeReturnTo(value: string | null): string | null {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
+    return null;
+  }
+  return value;
+}

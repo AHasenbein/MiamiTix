@@ -177,8 +177,12 @@ export class EventService {
     }
 
     const allEvents = await this.eventRepository.list();
+    // Only reuse upcoming events: a recurring night (same title + city) must not attach new
+    // listings to last week's past event, which is hidden from browse.
+    const now = Date.now();
     const existing = allEvents.find(
       (event) =>
+        event.startAt.getTime() >= now &&
         event.title.toLowerCase() === normalizedTitle.toLowerCase() &&
         event.city.toLowerCase() === input.city.trim().toLowerCase()
     );

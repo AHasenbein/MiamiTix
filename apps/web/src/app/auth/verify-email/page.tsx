@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { VerifyEmailClient } from "@/components/auth/VerifyEmailClient";
 
 export const metadata: Metadata = {
-  title: "Verify Email | Tix",
+  title: "Verify Email",
   description: "Confirm your email to complete account setup."
 };
 

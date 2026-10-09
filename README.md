@@ -43,6 +43,7 @@ Ticket Splice marketplace platform scaffold with modular API architecture.
   - `TRUSTED_SELLER_EMAILS`
 - Web required env:
   - `NEXT_PUBLIC_API_URL`
+  - `NEXT_PUBLIC_SITE_URL` (optional) — public site URL used for link previews (Instagram, iMessage, etc.). Defaults to Netlify's `URL`; set it if you serve from a custom domain that isn't the Netlify primary domain.
   - Avoid adding backend secrets to Netlify web env vars.
 
 ## Auth configuration

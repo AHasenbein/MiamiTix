@@ -12,6 +12,7 @@ import { EventCard } from "./EventCard";
 export function EventsBrowse() {
   const [events, setEvents] = useState<Event[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [wishlistError, setWishlistError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [wishlistedEventIds, setWishlistedEventIds] = useState<string[]>([]);
   const [wishlistUpdatingIds, setWishlistUpdatingIds] = useState<string[]>([]);
@@ -24,9 +25,10 @@ export function EventsBrowse() {
       setErrorMessage("");
       try {
         const token = readAuthToken();
+        // Wishlist state is optional: an expired session must not hide the events.
         const [eventsResponse, accountOverview] = await Promise.all([
           listEvents(),
-          token ? getAccountOverview(token) : Promise.resolve(null)
+          token ? getAccountOverview(token).catch(() => null) : Promise.resolve(null)
         ]);
         if (!cancelled) {
           setEvents(eventsResponse);
@@ -57,21 +59,25 @@ export function EventsBrowse() {
   async function handleToggleWishlist(eventId: string) {
     const token = readAuthToken();
     if (!token) {
-      setErrorMessage("Log in to wishlist events.");
+      setWishlistError("Log in to wishlist events.");
       return;
     }
     if (wishlistUpdatingIds.includes(eventId)) {
       return;
     }
 
-    const previousIds = wishlistedEventIds;
     const isWishlisted = wishlistedEventIds.includes(eventId);
-    const nextIds = isWishlisted
-      ? wishlistedEventIds.filter((id) => id !== eventId)
-      : [...wishlistedEventIds, eventId];
+    // Functional updates so concurrent toggles on different cards don't clobber each other.
+    const setWishlisted = (wishlisted: boolean) =>
+      setWishlistedEventIds((current) =>
+        wishlisted
+          ? current.includes(eventId) ? current : [...current, eventId]
+          : current.filter((id) => id !== eventId)
+      );
 
+    setWishlistError("");
     setWishlistUpdatingIds((current) => [...current, eventId]);
-    setWishlistedEventIds(nextIds);
+    setWishlisted(!isWishlisted);
     try {
       if (isWishlisted) {
         await removeEventFromWishlist(eventId, token);
@@ -79,8 +85,8 @@ export function EventsBrowse() {
         await addEventToWishlist(eventId, token);
       }
     } catch (error) {
-      setWishlistedEventIds(previousIds);
-      setErrorMessage(
+      setWishlisted(isWishlisted);
+      setWishlistError(
         error instanceof ApiClientError ? error.message : "Could not update wishlist."
       );
     } finally {
@@ -96,6 +102,7 @@ export function EventsBrowse() {
         </p>
       ) : null}
       {errorMessage ? <Alert tone="error">{errorMessage}</Alert> : null}
+      {wishlistError ? <Alert tone="info">{wishlistError}</Alert> : null}
       {!isLoading && !errorMessage && !events.length ? (
         <Alert tone="info">
           No events are currently listed for sale.

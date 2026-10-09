@@ -6,7 +6,7 @@ interface ListingDetailPageProps {
 }
 
 export const metadata: Metadata = {
-  title: "Listing Details | Tix",
+  title: "Listing Details",
   description: "Review listing details and send your ticket request to the seller."
 };
 

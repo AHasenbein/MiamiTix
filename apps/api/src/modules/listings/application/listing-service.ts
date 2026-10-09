@@ -122,7 +122,21 @@ export class ListingService {
       .filter((listing) => (filters.eventId ? listing.eventId === filters.eventId : true))
       .filter((listing) => (filters.sellerId ? listing.sellerId === filters.sellerId : true))
       .filter((listing) => (filters.includeSoldOut ? true : !listing.soldOut));
-    return Promise.all(filtered.map((listing) => this.toResponse(listing)));
+
+    // Load events once instead of one lookup per listing, and skip listings whose event
+    // no longer exists so one orphaned row can't break every page that lists tickets.
+    const events = await this.eventService.listEvents({ upcomingOnly: false });
+    const eventsById = new Map(events.map((event) => [event.id, event]));
+    const responses: ListingResponse[] = [];
+    for (const listing of filtered) {
+      const event = eventsById.get(listing.eventId);
+      if (!event) {
+        console.warn(`[listings] skipping listing ${listing.id}: event ${listing.eventId} not found`);
+        continue;
+      }
+      responses.push(await this.toResponse(listing, event));
+    }
+    return responses;
   }
 
   async getListingById(listingId: string): Promise<ListingResponse> {
@@ -329,6 +343,9 @@ export class ListingService {
       }
 
       const event = await this.eventService.getEventById(listing.eventId);
+      if (new Date(event.startAt).getTime() < Date.now()) {
+        continue;
+      }
       grouped.set(listing.eventId, {
         event,
         listingCount: 1,

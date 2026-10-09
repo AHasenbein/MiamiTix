@@ -6,14 +6,14 @@ import { useEffect, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { saveAuthToken } from "@/lib/auth/token-storage";
+import { safeReturnTo, saveAuthToken } from "@/lib/auth/token-storage";
 
 export function OAuthCallbackClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const error = searchParams.get("error");
-  const returnTo = searchParams.get("returnTo");
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
   const [isRedirectSlow, setIsRedirectSlow] = useState(false);
 
   useEffect(() => {

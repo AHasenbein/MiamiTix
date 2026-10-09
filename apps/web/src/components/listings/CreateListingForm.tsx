@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { AuthUser } from "@/lib/api/auth";
 import { getCurrentUser } from "@/lib/api/auth";
@@ -9,21 +9,12 @@ import { ApiClientError } from "@/lib/api/client";
 import { uploadEventImage } from "@/lib/api/events";
 import { createListing, listMarketEventSuggestions } from "@/lib/api/listings";
 import { readAuthToken } from "@/lib/auth/token-storage";
+import { toDateTimeLocalValue } from "@/lib/datetime";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { EventImagePicker } from "../ui/EventImagePicker";
 import { Input } from "../ui/Input";
 import { SurfaceCard } from "../ui/SurfaceCard";
-
-function toDateTimeLocalValue(isoString: string): string {
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
-  return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 16);
-}
 
 function toIsoFromDateTimeLocal(value: string): string | null {
   const date = new Date(value);
@@ -51,6 +42,8 @@ export function CreateListingForm() {
   const [eventDateTime, setEventDateTime] = useState("");
   const [eventImageUrl, setEventImageUrl] = useState("");
   const [eventImageDataToUpload, setEventImageDataToUpload] = useState("");
+  // Read inside the debounced suggestion effect without re-running it on every image change.
+  const hasPendingImageUploadRef = useRef(false);
   const [debouncedEventTitle, setDebouncedEventTitle] = useState("");
   const [debouncedEventArtist, setDebouncedEventArtist] = useState("");
   const [debouncedEventCity, setDebouncedEventCity] = useState("");
@@ -86,7 +79,7 @@ export function CreateListingForm() {
     let cancelled = false;
     const token = readAuthToken();
     if (!token) {
-      router.replace("/auth/login");
+      router.replace(`/auth/login?returnTo=${encodeURIComponent("/listings/new")}`);
       return;
     }
 
@@ -98,7 +91,7 @@ export function CreateListingForm() {
       })
       .catch(() => {
         if (!cancelled) {
-          router.replace("/auth/login");
+          router.replace(`/auth/login?returnTo=${encodeURIComponent("/listings/new")}`);
         }
       });
 
@@ -151,7 +144,7 @@ export function CreateListingForm() {
             setEventVenue(exactMatch.venue);
             setEventCity(exactMatch.city);
             setEventDateTime(toDateTimeLocalValue(exactMatch.startAt));
-            if (!eventImageDataToUpload) {
+            if (!hasPendingImageUploadRef.current) {
               setEventImageUrl(exactMatch.imageUrl ?? "");
             }
           } else {
@@ -177,7 +170,7 @@ export function CreateListingForm() {
     event.preventDefault();
     const token = readAuthToken();
     if (!token) {
-      router.push("/auth/login");
+      router.push(`/auth/login?returnTo=${encodeURIComponent("/listings/new")}`);
       return;
     }
     if (!currentUser?.isTrustedSeller) {
@@ -265,12 +258,14 @@ export function CreateListingForm() {
     setEventImageError("");
     setEventImageUrl(dataUrl);
     setEventImageDataToUpload(dataUrl);
+    hasPendingImageUploadRef.current = true;
   }
 
   function clearEventImage() {
     setEventImageError("");
     setEventImageUrl("");
     setEventImageDataToUpload("");
+    hasPendingImageUploadRef.current = false;
   }
 
   function selectSuggestion(eventSuggestion: (typeof eventSuggestions)[number]) {
@@ -280,6 +275,7 @@ export function CreateListingForm() {
     setEventCity(eventSuggestion.city);
     setEventImageUrl(eventSuggestion.imageUrl ?? "");
     setEventImageDataToUpload("");
+    hasPendingImageUploadRef.current = false;
     setEventDateTime(toDateTimeLocalValue(eventSuggestion.startAt));
     setMarketPriceCents(eventSuggestion.currentPriceCents);
   }

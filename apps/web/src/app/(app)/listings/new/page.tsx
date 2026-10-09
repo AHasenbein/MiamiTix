@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CreateListingForm } from "@/components/listings/CreateListingForm";
 
 export const metadata: Metadata = {
-  title: "Create Listing | Tix",
+  title: "Create Listing",
   description: "Publish a ticket listing for an upcoming event."
 };
 

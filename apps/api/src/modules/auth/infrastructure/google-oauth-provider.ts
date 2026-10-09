@@ -13,6 +13,7 @@ interface GoogleTokenResponse {
 interface GoogleUserInfoResponse {
   sub?: string;
   email?: string;
+  email_verified?: boolean;
   name?: string;
 }
 
@@ -76,6 +77,10 @@ export class GoogleOAuthProvider implements OAuthProviderAdapter {
     const userInfoBody = (await userInfoResponse.json()) as GoogleUserInfoResponse;
     if (!userInfoResponse.ok || !userInfoBody.sub || !userInfoBody.email) {
       throw new HttpError(401, "Failed to fetch Google user profile.");
+    }
+    // Accounts are linked by email, so only trust addresses Google has verified.
+    if (userInfoBody.email_verified !== true) {
+      throw new HttpError(401, "Your Google email address is not verified.");
     }
 
     return {

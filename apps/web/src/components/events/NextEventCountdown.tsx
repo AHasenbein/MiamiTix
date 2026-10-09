@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Event } from "@/lib/api/events";
 import { listEvents } from "@/lib/api/events";
 
@@ -14,7 +14,7 @@ function pickHeadlineArtist(event: Event): string {
 }
 
 export function NextEventCountdown() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [nextEvent, setNextEvent] = useState<Event | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,7 +23,11 @@ export function NextEventCountdown() {
       try {
         const response = await listEvents({ limit: 20 });
         if (!cancelled) {
-          setEvents(response);
+          const now = Date.now();
+          const upcoming = response
+            .filter((event) => new Date(event.startAt).getTime() > now)
+            .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+          setNextEvent(upcoming[0] ?? null);
         }
       } catch {
         // Pill simply hides itself if we can't load events.
@@ -35,14 +39,6 @@ export function NextEventCountdown() {
       cancelled = true;
     };
   }, []);
-
-  const nextEvent = useMemo(() => {
-    const now = Date.now();
-    const upcoming = events
-      .filter((event) => new Date(event.startAt).getTime() > now)
-      .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
-    return upcoming[0] ?? null;
-  }, [events]);
 
   if (!nextEvent) {
     return null;

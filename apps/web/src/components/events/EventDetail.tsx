@@ -10,6 +10,7 @@ import { getEvent, updateEvent, uploadEventImage } from "@/lib/api/events";
 import { ApiClientError } from "@/lib/api/client";
 import { listListings } from "@/lib/api/listings";
 import { readAuthToken } from "@/lib/auth/token-storage";
+import { toDateTimeLocalValue } from "@/lib/datetime";
 import { ListingCard } from "../listings/ListingCard";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
@@ -38,6 +39,7 @@ export function EventDetail({ eventId }: EventDetailProps) {
   const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [editErrorMessage, setEditErrorMessage] = useState("");
   const [listingsErrorMessage, setListingsErrorMessage] = useState("");
   const [wishlistMessage, setWishlistMessage] = useState("");
   const [imageError, setImageError] = useState("");
@@ -56,7 +58,7 @@ export function EventDetail({ eventId }: EventDetailProps) {
           setEditTitle(eventResponse.title);
           setEditVenue(eventResponse.venue);
           setEditCity(eventResponse.city);
-          setEditStartAt(eventResponse.startAt.slice(0, 16));
+          setEditStartAt(toDateTimeLocalValue(eventResponse.startAt));
           setEditImageUrl(eventResponse.imageUrl ?? "");
           setEditImageDataToUpload("");
         }
@@ -146,9 +148,10 @@ export function EventDetail({ eventId }: EventDetailProps) {
     const normalizedStartAt = editStartAt ? new Date(editStartAt).toISOString() : event.startAt;
     setIsSavingEvent(true);
     setIsUploadingImage(Boolean(editImageDataToUpload));
-    setErrorMessage("");
+    setEditErrorMessage("");
     try {
-      let uploadedImageUrl = editImageUrl || undefined;
+      // An empty string tells the API to clear the image (undefined would leave it unchanged).
+      let uploadedImageUrl = editImageUrl;
       if (editImageDataToUpload) {
         uploadedImageUrl = await uploadEventImage(editImageDataToUpload, token);
       }
@@ -167,12 +170,14 @@ export function EventDetail({ eventId }: EventDetailProps) {
       setEditTitle(updated.title);
       setEditVenue(updated.venue);
       setEditCity(updated.city);
-      setEditStartAt(updated.startAt.slice(0, 16));
+      setEditStartAt(toDateTimeLocalValue(updated.startAt));
       setEditImageUrl(updated.imageUrl ?? "");
       setEditImageDataToUpload("");
       setWishlistMessage("Event updated.");
     } catch (error) {
-      setErrorMessage(error instanceof ApiClientError ? error.message : "Could not update event.");
+      setEditErrorMessage(
+        error instanceof ApiClientError ? error.message : "Could not update event."
+      );
     } finally {
       setIsSavingEvent(false);
       setIsUploadingImage(false);
@@ -312,6 +317,11 @@ export function EventDetail({ eventId }: EventDetailProps) {
                   onClear={clearEditImage}
                   errorMessage={imageError || undefined}
                 />
+                {editErrorMessage ? (
+                  <Alert tone="error" announce="assertive">
+                    {editErrorMessage}
+                  </Alert>
+                ) : null}
                 <Button variant="secondary" disabled={isSavingEvent} type="submit">
                   {isSavingEvent
                     ? isUploadingImage

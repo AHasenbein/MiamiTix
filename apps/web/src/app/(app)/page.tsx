@@ -138,24 +138,12 @@ export default function Home() {
                 <span className="hidden sm:inline">Trusted sellers: list tickets</span>
               </ButtonLink>
             </div>
-            <dl className="fade-in-up delay-5 mt-2 grid max-w-2xl grid-cols-1 gap-4 border-t border-[var(--border)] pt-5 sm:mt-4 sm:grid-cols-3 sm:gap-6 sm:pt-6">
-              <div>
-                <dt className="text-xs uppercase tracking-[0.16em] text-[var(--neon-blue-soft)] sm:tracking-[0.22em]">
-                  Verified sellers
-                </dt>
-                <dd className="brand-heading mt-1.5 text-2xl font-semibold text-white sm:mt-2">100%</dd>
-              </div>
+            <dl className="fade-in-up delay-5 mt-2 grid max-w-2xl gap-4 border-t border-[var(--border)] pt-5 sm:mt-4 sm:gap-6 sm:pt-6">
               <div>
                 <dt className="text-xs uppercase tracking-[0.16em] text-[var(--neon-pink-soft)] sm:tracking-[0.22em]">
                   Total fees charged
                 </dt>
                 <dd className="brand-heading mt-1.5 text-2xl font-semibold text-white sm:mt-2">$0.00</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.16em] text-[var(--silver)] sm:tracking-[0.22em]">
-                  Cities live
-                </dt>
-                <dd className="brand-heading mt-1.5 text-2xl font-semibold text-white sm:mt-2">24+</dd>
               </div>
             </dl>
           </div>
@@ -266,7 +254,7 @@ export default function Home() {
               Plug in. Tune in. <span className="brand-gradient-text">Vibe out.</span>
             </h2>
             <p className="silver-text mt-2 max-w-xl text-sm sm:text-base">
-              Whether you're chasing a sold-out show or moving a spare ticket fast, Tix keeps
+              Whether you&apos;re chasing a sold-out show or moving a spare ticket fast, Tix keeps
               it sleek, secure, and electric.
             </p>
           </div>

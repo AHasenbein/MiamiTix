@@ -33,14 +33,15 @@ export function DashboardPanel() {
           setUser(response.user);
         }
       } catch (error) {
-        clearAuthToken();
+        if (error instanceof ApiClientError && error.statusCode === 401) {
+          clearAuthToken();
+          router.replace(`/auth/login?returnTo=${encodeURIComponent("/dashboard")}`);
+          return;
+        }
         if (!cancelled) {
           setErrorMessage(
-            error instanceof ApiClientError
-              ? error.message
-              : "Your session expired. Please log in again."
+            error instanceof ApiClientError ? error.message : "Could not load your dashboard."
           );
-          router.replace("/auth/login");
         }
       } finally {
         if (!cancelled) {

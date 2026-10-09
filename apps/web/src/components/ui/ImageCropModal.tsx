@@ -25,7 +25,7 @@ function coverScale(imageWidth: number, imageHeight: number, frameWidth: number,
 
 export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const [objectUrl, setObjectUrl] = useState("");
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const [frameSize, setFrameSize] = useState({ width: 320, height: 256 });
   const [zoom, setZoom] = useState(1);
@@ -37,7 +37,9 @@ export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProp
 
   useEffect(() => {
     const url = URL.createObjectURL(file);
-    setObjectUrl(url);
+    if (imageRef.current) {
+      imageRef.current.src = url;
+    }
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
@@ -73,15 +75,13 @@ export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProp
   const maxPanX = Math.max(0, (drawnWidth - frameSize.width) / 2);
   const maxPanY = Math.max(0, (drawnHeight - frameSize.height) / 2);
 
-  useEffect(() => {
-    setPan((current) => ({
-      x: clamp(current.x, -maxPanX, maxPanX),
-      y: clamp(current.y, -maxPanY, maxPanY)
-    }));
-  }, [maxPanX, maxPanY]);
-
-  const imageLeft = (frameSize.width - drawnWidth) / 2 + pan.x;
-  const imageTop = (frameSize.height - drawnHeight) / 2 + pan.y;
+  // Zooming out or resizing shrinks the pan limits, so clamp at render time.
+  const clampedPan = {
+    x: clamp(pan.x, -maxPanX, maxPanX),
+    y: clamp(pan.y, -maxPanY, maxPanY)
+  };
+  const imageLeft = (frameSize.width - drawnWidth) / 2 + clampedPan.x;
+  const imageTop = (frameSize.height - drawnHeight) / 2 + clampedPan.y;
 
   const getCropRect = useCallback((): ImageCropRect => {
     const x = (-imageLeft) / scale;
@@ -98,7 +98,7 @@ export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProp
 
   function beginDrag(clientX: number, clientY: number) {
     setIsDragging(true);
-    dragOrigin.current = { x: clientX, y: clientY, panX: pan.x, panY: pan.y };
+    dragOrigin.current = { x: clientX, y: clientY, panX: clampedPan.x, panY: clampedPan.y };
   }
 
   function moveDrag(clientX: number, clientY: number) {
@@ -171,28 +171,29 @@ export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProp
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
           >
-            {objectUrl ? (
-              <img
-                alt="Crop preview"
-                src={objectUrl}
-                draggable={false}
-                className={`absolute max-w-none origin-top-left ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
-                style={{
-                  width: drawnWidth || undefined,
-                  height: drawnHeight || undefined,
-                  left: imageLeft,
-                  top: imageTop
-                }}
-                onLoad={(event) => {
-                  setNaturalSize({
-                    width: event.currentTarget.naturalWidth,
-                    height: event.currentTarget.naturalHeight
-                  });
-                  setZoom(1);
-                  setPan({ x: 0, y: 0 });
-                }}
-              />
-            ) : null}
+            {/* src is assigned from an object URL in the effect above. */}
+            <img
+              ref={imageRef}
+              alt="Crop preview"
+              draggable={false}
+              className={`absolute max-w-none origin-top-left ${isDragging ? "cursor-grabbing" : "cursor-grab"} ${
+                naturalSize.width ? "" : "invisible"
+              }`}
+              style={{
+                width: drawnWidth || undefined,
+                height: drawnHeight || undefined,
+                left: imageLeft,
+                top: imageTop
+              }}
+              onLoad={(event) => {
+                setNaturalSize({
+                  width: event.currentTarget.naturalWidth,
+                  height: event.currentTarget.naturalHeight
+                });
+                setZoom(1);
+                setPan({ x: 0, y: 0 });
+              }}
+            />
             <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35),inset_0_0_40px_rgba(0,0,0,0.35)]" />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-[linear-gradient(180deg,rgba(0,0,0,0.35),transparent)]" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-[linear-gradient(0deg,rgba(0,0,0,0.35),transparent)]" />

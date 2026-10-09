@@ -26,17 +26,21 @@ export function isTrustedSeller(email: string): boolean {
   return trustedSellerEmails.has(email.trim().toLowerCase());
 }
 
+// With no allowlist configured, admin powers (delete-all, edit-anything) are open to everyone
+// for local development only. In production they fail closed.
+const allowAllWhenUnconfigured = env.NODE_ENV !== "production";
+
 export function isPrimaryTrustedSeller(email: string): boolean {
   const primaryEmail = getPrimaryTrustedSellerEmail();
   if (!primaryEmail) {
-    return true;
+    return allowAllWhenUnconfigured;
   }
   return email.trim().toLowerCase() === primaryEmail;
 }
 
 export function isTopTrustedSeller(email: string, topLimit = 3): boolean {
   if (trustedSellerEmailList.length === 0) {
-    return true;
+    return allowAllWhenUnconfigured;
   }
   return getTopTrustedSellerEmails(topLimit).includes(email.trim().toLowerCase());
 }

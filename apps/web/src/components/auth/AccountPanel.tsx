@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AccountOverview, AuthUser } from "@/lib/api/auth";
@@ -41,6 +42,11 @@ export function AccountPanel() {
           setOverview(accountResult);
         }
       } catch (error) {
+        if (error instanceof ApiClientError && error.statusCode === 401) {
+          clearAuthToken();
+          router.replace(`/auth/login?returnTo=${encodeURIComponent("/account")}`);
+          return;
+        }
         if (!cancelled) {
           setErrorMessage(
             error instanceof ApiClientError
@@ -88,7 +94,9 @@ export function AccountPanel() {
               ...current,
               wishlistedEvents: [],
               boughtEvents: [],
-              sellingEvents: []
+              sellingEvents: [],
+              ticketRequestsSent: [],
+              ticketRequestsIncoming: []
             }
           : current
       );
@@ -105,7 +113,7 @@ export function AccountPanel() {
   return (
     <SurfaceCard className="w-full max-w-2xl p-5 sm:p-8">
       <h1 className="brand-heading text-2xl font-semibold">Your account</h1>
-      <p className="muted-text mt-2 text-sm">Session check from the live API.</p>
+      <p className="muted-text mt-2 text-sm">Your profile, wishlist, and ticket activity.</p>
 
       {isLoading ? (
         <p className="muted-text mt-6" role="status" aria-live="polite">
@@ -156,7 +164,9 @@ export function AccountPanel() {
                     key={event.id}
                     className="rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2"
                   >
-                    <p>{event.title}</p>
+                    <Link href={`/events/${event.id}`} className="underline-offset-4 hover:underline">
+                      {event.title}
+                    </Link>
                     <p className="muted-text text-xs">{event.city}</p>
                   </li>
                 ))}
@@ -196,7 +206,12 @@ export function AccountPanel() {
                     key={event.listingId}
                     className="rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2"
                   >
-                    <p>{event.eventTitle}</p>
+                    <Link
+                      href={`/listings/${event.listingId}`}
+                      className="underline-offset-4 hover:underline"
+                    >
+                      {event.eventTitle}
+                    </Link>
                     <p className="muted-text text-xs">
                       {event.city} - {event.active ? "Active listing" : "Sold out"}
                     </p>
@@ -232,20 +247,18 @@ export function AccountPanel() {
       ) : null}
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <ButtonLink href="/listings/mine" variant="secondary">
+          My listings
+        </ButtonLink>
         <Button
           variant="ghost"
           onClick={() => {
             clearAuthToken();
-            setUser(null);
-            setErrorMessage("Signed out locally. Log in again.");
             router.push("/auth/login");
           }}
         >
-          Clear local session
+          Log out
         </Button>
-        <ButtonLink href="/auth/login" variant="secondary">
-          Log in again
-        </ButtonLink>
       </div>
       {user?.isPrimaryTrustedSeller ? (
         <div className="mt-4">
