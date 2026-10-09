@@ -1,6 +1,10 @@
-# Ticket Splice
+# Miami Tix
 
-Ticket Splice marketplace platform scaffold with modular API architecture.
+Ticket marketplace for music events, live at **[tixmiami.com](https://tixmiami.com)**. Fans browse events and request tickets from trusted sellers with zero fees.
+
+TypeScript monorepo:
+- `apps/web`: Next.js frontend (Netlify)
+- `apps/api`: Express API with modular auth / events / listings domains, JWT + Google OAuth, MongoDB, Cloudinary image uploads (Fly.io)
 
 ## Quick start
 
