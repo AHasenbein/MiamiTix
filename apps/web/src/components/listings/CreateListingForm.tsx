@@ -6,10 +6,10 @@ import type { FormEvent } from "react";
 import type { AuthUser } from "@/lib/api/auth";
 import { getCurrentUser } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
-import { uploadEventImage } from "@/lib/api/events";
+import { getEvent, listArtistSuggestions, uploadEventImage } from "@/lib/api/events";
 import { createListing, listMarketEventSuggestions } from "@/lib/api/listings";
 import { readAuthToken } from "@/lib/auth/token-storage";
-import { toDateTimeLocalValue } from "@/lib/datetime";
+import { hasEventStarted, toDateTimeLocalValue } from "@/lib/datetime";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { EventImagePicker } from "../ui/EventImagePicker";
@@ -31,7 +31,21 @@ const seatTypes = [
   { value: "OTHER" as const, label: "Other", hint: "Custom seat type" }
 ];
 
-export function CreateListingForm() {
+// Two date/time values within this window are treated as the same night of an event.
+const SAME_NIGHT_WINDOW_MS = 1000 * 60 * 60 * 12;
+
+function isSameNight(dateTimeLocal: string, isoString: string): boolean {
+  const a = new Date(dateTimeLocal).getTime();
+  const b = new Date(isoString).getTime();
+  return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= SAME_NIGHT_WINDOW_MS;
+}
+
+interface CreateListingFormProps {
+  /** Prefill the form from an existing event (e.g. "List this event" on an event page). */
+  initialEventId?: string;
+}
+
+export function CreateListingForm({ initialEventId }: CreateListingFormProps = {}) {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [eventId, setEventId] = useState<string | undefined>(undefined);
@@ -50,6 +64,10 @@ export function CreateListingForm() {
   const [seatType, setSeatType] = useState<"GA" | "VIP" | "OTHER">("GA");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [notes, setNotes] = useState("");
+  const [artistSuggestions, setArtistSuggestions] = useState<string[]>([]);
+  // Latest typed values, read by the debounced auto-match without re-triggering it.
+  const formValuesRef = useRef({ eventId: undefined as string | undefined, eventVenue: "", eventDateTime: "" });
   const [marketPriceCents, setMarketPriceCents] = useState<number | null>(null);
   const [eventSuggestions, setEventSuggestions] = useState<
     Array<{
@@ -101,6 +119,59 @@ export function CreateListingForm() {
   }, [router]);
 
   useEffect(() => {
+    formValuesRef.current = { eventId, eventVenue, eventDateTime };
+  }, [eventId, eventVenue, eventDateTime]);
+
+  useEffect(() => {
+    if (!initialEventId) {
+      return;
+    }
+    let cancelled = false;
+    void getEvent(initialEventId)
+      .then((event) => {
+        if (cancelled || hasEventStarted(event.startAt)) {
+          return;
+        }
+        setEventId(event.id);
+        setEventTitle(event.title);
+        setEventArtist(event.artists[0] ?? "");
+        setEventVenue(event.venue);
+        setEventCity(event.city);
+        setEventDateTime(toDateTimeLocalValue(event.startAt));
+        if (!hasPendingImageUploadRef.current) {
+          setEventImageUrl(event.imageUrl ?? "");
+        }
+      })
+      .catch(() => {
+        // Prefill is a convenience; the seller can still type the event in.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialEventId]);
+
+  useEffect(() => {
+    const query = eventArtist.trim();
+    if (query.length < 2) {
+      return;
+    }
+    let cancelled = false;
+    const timeout = setTimeout(() => {
+      void listArtistSuggestions(query)
+        .then((artists) => {
+          if (!cancelled) {
+            setArtistSuggestions(artists);
+          }
+        })
+        .catch(() => undefined);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [eventArtist]);
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedEventTitle(eventTitle.trim());
       setDebouncedEventArtist(eventArtist.trim());
@@ -118,7 +189,6 @@ export function CreateListingForm() {
       if (!debouncedEventTitle) {
         setEventSuggestions([]);
         setMarketPriceCents(null);
-        setEventId(undefined);
         return;
       }
 
@@ -131,24 +201,31 @@ export function CreateListingForm() {
         });
         if (!cancelled) {
           setEventSuggestions(response);
+          const typed = formValuesRef.current;
           const exactMatch = response.find(
             (item) =>
               item.title.toLowerCase() === debouncedEventTitle.toLowerCase() &&
               (debouncedEventCity
                 ? item.city.toLowerCase() === debouncedEventCity.toLowerCase()
-                : true)
+                : true) &&
+              // A recurring night with a different date the seller already typed is a
+              // different event; don't silently attach to it.
+              (typed.eventDateTime ? isSameNight(typed.eventDateTime, item.startAt) : true)
           );
           setMarketPriceCents(exactMatch?.currentPriceCents ?? null);
-          if (exactMatch) {
+          // Auto-match only fills what's still blank, so it never overwrites the seller's input.
+          if (exactMatch && !typed.eventId) {
             setEventId(exactMatch.eventId);
-            setEventVenue(exactMatch.venue);
-            setEventCity(exactMatch.city);
-            setEventDateTime(toDateTimeLocalValue(exactMatch.startAt));
-            if (!hasPendingImageUploadRef.current) {
-              setEventImageUrl(exactMatch.imageUrl ?? "");
+            if (!typed.eventVenue.trim()) {
+              setEventVenue(exactMatch.venue);
             }
-          } else {
-            setEventId(undefined);
+            setEventCity((current) => current.trim() || exactMatch.city);
+            if (!typed.eventDateTime) {
+              setEventDateTime(toDateTimeLocalValue(exactMatch.startAt));
+            }
+            if (!hasPendingImageUploadRef.current) {
+              setEventImageUrl((current) => current || exactMatch.imageUrl || "");
+            }
           }
         }
       } catch (error) {
@@ -198,6 +275,10 @@ export function CreateListingForm() {
       setEventDateTimeError("Event date and time are required.");
       return;
     }
+    if (new Date(eventStartAtIso).getTime() < Date.now()) {
+      setEventDateTimeError("Event date must be in the future.");
+      return;
+    }
     setEventDateTimeError("");
 
     const parsedPrice = Number(price);
@@ -236,6 +317,7 @@ export function CreateListingForm() {
           seatType,
           priceCents,
           quantity: parsedQuantity,
+          notes: notes.trim() || undefined,
           title: undefined
         },
         token
@@ -341,12 +423,15 @@ export function CreateListingForm() {
               required
               value={eventTitle}
               placeholder="What show are you selling?"
+              autoComplete="off"
               errorMessage={eventTitleError || undefined}
             />
             <Input
               label="Artist (optional)"
               onChange={(event) => setEventArtist(event.target.value)}
               value={eventArtist}
+              list="artist-suggestions"
+              autoComplete="off"
               placeholder="Headliner or lineup"
             />
             {eventSuggestions.length ? (
@@ -418,6 +503,7 @@ export function CreateListingForm() {
                       ? eventDateTime.slice(11, 16)
                       : "19:00";
                     setEventDateTime(`${event.target.value}T${currentTime}`);
+                setEventId(undefined);
                   }}
                   errorMessage={eventDateTimeError || undefined}
                 />
@@ -435,6 +521,7 @@ export function CreateListingForm() {
                       return;
                     }
                     setEventDateTime(`${currentDate}T${event.target.value}`);
+                    setEventId(undefined);
                     setEventDateTimeError("");
                   }}
                 />
@@ -486,6 +573,7 @@ export function CreateListingForm() {
                 onChange={(event) => setPrice(event.target.value)}
                 required
                 step="0.01"
+                inputMode="decimal"
                 type="number"
                 value={price}
                 placeholder="0.00"
@@ -496,11 +584,19 @@ export function CreateListingForm() {
                 max={20}
                 min={1}
                 onChange={(event) => setQuantity(event.target.value)}
+                inputMode="numeric"
                 required
                 type="number"
                 value={quantity}
               />
             </div>
+            <Input
+              label="Notes for buyers (optional)"
+              maxLength={600}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Section, transfer method, pickup details..."
+              value={notes}
+            />
           </section>
 
           {errorMessage ? (
@@ -554,12 +650,15 @@ export function CreateListingForm() {
               required
               value={eventTitle}
               placeholder="Event name"
+              autoComplete="off"
               errorMessage={eventTitleError || undefined}
             />
             <Input
               label="Artist (optional)"
               onChange={(event) => setEventArtist(event.target.value)}
               value={eventArtist}
+              list="artist-suggestions"
+              autoComplete="off"
               placeholder="Artist name"
             />
             <Input
@@ -607,6 +706,7 @@ export function CreateListingForm() {
                   ? eventDateTime.slice(11, 16)
                   : "19:00";
                 setEventDateTime(`${event.target.value}T${currentTime}`);
+                setEventId(undefined);
               }}
               errorMessage={eventDateTimeError || undefined}
             />
@@ -624,6 +724,7 @@ export function CreateListingForm() {
                   return;
                 }
                 setEventDateTime(`${currentDate}T${event.target.value}`);
+                setEventId(undefined);
                 setEventDateTimeError("");
               }}
             />
@@ -680,6 +781,7 @@ export function CreateListingForm() {
               onChange={(event) => setPrice(event.target.value)}
               required
               step="0.01"
+              inputMode="decimal"
               type="number"
               value={price}
             />
@@ -689,11 +791,19 @@ export function CreateListingForm() {
               max={20}
               min={1}
               onChange={(event) => setQuantity(event.target.value)}
+              inputMode="numeric"
               required
               type="number"
               value={quantity}
             />
           </div>
+          <Input
+            label="Notes for buyers (optional)"
+            maxLength={600}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Section, transfer method, pickup details..."
+            value={notes}
+          />
           {errorMessage ? (
             <Alert tone="error" announce="assertive">
               {errorMessage}
@@ -714,6 +824,11 @@ export function CreateListingForm() {
           </div>
         </form>
       </SurfaceCard>
+      <datalist id="artist-suggestions">
+        {artistSuggestions.map((artist) => (
+          <option key={artist} value={artist} />
+        ))}
+      </datalist>
     </>
   );
 }

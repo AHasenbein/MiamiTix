@@ -8,3 +8,9 @@ export function toDateTimeLocalValue(isoString: string): string {
   const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
   return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 16);
 }
+
+/** True once an event's start time has passed. */
+export function hasEventStarted(isoString: string): boolean {
+  const time = new Date(isoString).getTime();
+  return Number.isFinite(time) && time < Date.now();
+}

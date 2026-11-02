@@ -47,6 +47,7 @@ export interface UpdateListingInput {
   quantity?: number;
   eventImageUrl?: string;
   notes?: string;
+  soldOut?: boolean;
 }
 
 export interface PurchaseResult {
@@ -107,6 +108,18 @@ export async function updateListing(
     body: JSON.stringify(input)
   });
   return response.listing;
+}
+
+export function updatePurchaseRequestStatus(
+  requestId: string,
+  status: "contacted" | "cancelled",
+  token: string
+): Promise<{ requestId: string; status: "contacted" | "cancelled" }> {
+  return apiRequest(`/api/v1/listings/requests/${encodeURIComponent(requestId)}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ status })
+  });
 }
 
 export function deleteListing(listingId: string, token: string): Promise<{ message: string }> {

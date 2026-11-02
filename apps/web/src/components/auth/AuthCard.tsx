@@ -12,7 +12,7 @@ import {
   resendVerificationEmail
 } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
-import { safeReturnTo, saveAuthToken } from "@/lib/auth/token-storage";
+import { safeReturnTo, saveAuthToken, saveOAuthReturnTo } from "@/lib/auth/token-storage";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -86,6 +86,10 @@ export function AuthCard({ mode }: AuthCardProps) {
         if (result.token) {
           saveAuthToken(result.token);
           router.push(returnTo || "/dashboard");
+        } else if (result.verificationRequired && result.verificationEmailSent === false) {
+          setErrorMessage(
+            "Your account was created, but we couldn't send the verification email. Use \"Resend verification email\" below to try again."
+          );
         } else if (result.verificationRequired) {
           setSuccessMessage("Verification email sent. Check your inbox before logging in.");
           if (result.verificationPreviewUrl && process.env.NODE_ENV === "development") {
@@ -116,6 +120,8 @@ export function AuthCard({ mode }: AuthCardProps) {
     setErrorMessage("");
     try {
       const authorizationUrl = await getOAuthAuthorizationUrl(provider);
+      // The OAuth round trip drops our query string, so keep returnTo for the callback page.
+      saveOAuthReturnTo(returnTo);
       window.location.assign(authorizationUrl);
     } catch (error) {
       setErrorMessage(

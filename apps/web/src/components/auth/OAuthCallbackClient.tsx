@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { safeReturnTo, saveAuthToken } from "@/lib/auth/token-storage";
+import { safeReturnTo, saveAuthToken, takeOAuthReturnTo } from "@/lib/auth/token-storage";
 
 export function OAuthCallbackClient() {
   const router = useRouter();
@@ -22,7 +22,7 @@ export function OAuthCallbackClient() {
       const timeout = setTimeout(() => {
         setIsRedirectSlow(true);
       }, 2500);
-      router.replace(returnTo || "/dashboard");
+      router.replace(returnTo || takeOAuthReturnTo() || "/dashboard");
       return () => {
         clearTimeout(timeout);
       };

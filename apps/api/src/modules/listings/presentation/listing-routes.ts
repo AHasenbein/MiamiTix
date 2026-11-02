@@ -21,6 +21,13 @@ const createListingSchema = z.object({
   quantity: z.number().int().min(1).max(20),
   notes: z.string().trim().max(600).optional()
 }).superRefine((value, context) => {
+  if (value.eventStartAt && new Date(value.eventStartAt).getTime() < Date.now()) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Event date must be in the future.",
+      path: ["eventStartAt"]
+    });
+  }
   if (!value.eventId) {
     if (!value.eventTitle) {
       context.addIssue({
@@ -55,7 +62,19 @@ const createListingSchema = z.object({
 
 const purchaseSchema = z.object({
   quantity: z.number().int().min(1).max(10),
-  phone: z.string().trim().min(7).max(24)
+  phone: z
+    .string()
+    .trim()
+    .min(7)
+    .max(24)
+    .refine(
+      (value) => /^\+?[\d\s().-]+$/.test(value) && value.replace(/\D/g, "").length >= 7,
+      { message: "Enter a valid phone number so the seller can contact you." }
+    )
+});
+
+const updateRequestStatusSchema = z.object({
+  status: z.enum(["contacted", "cancelled"])
 });
 
 const updateListingSchema = z
@@ -65,7 +84,8 @@ const updateListingSchema = z
     priceCents: z.number().int().min(100).optional(),
     quantity: z.number().int().min(1).max(20).optional(),
     eventImageUrl: z.string().max(2_500_000).optional(),
-    notes: z.string().trim().max(600).optional()
+    notes: z.string().trim().max(600).optional(),
+    soldOut: z.boolean().optional()
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "Provide at least one listing field to update."
@@ -182,6 +202,22 @@ export function createListingRoutes(
     }
   });
 
+  router.patch("/requests/:requestId", async (req, res, next) => {
+    try {
+      const token = extractBearerToken(req.headers.authorization);
+      const user = await authService.getCurrentUser(token);
+      const input = updateRequestStatusSchema.parse(req.body);
+      const result = await listingService.updatePurchaseRequestStatus({
+        requestId: req.params.requestId,
+        userId: user.id,
+        status: input.status
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.patch("/:listingId", async (req, res, next) => {
     try {
       const token = extractBearerToken(req.headers.authorization);
@@ -196,20 +232,30 @@ export function createListingRoutes(
       }
 
       const input = updateListingSchema.parse(req.body);
+      // The image belongs to the shared event, so it follows event edit rules, and it's applied
+      // first so an invalid image can't leave the listing half-updated behind a 400.
+      if (input.eventImageUrl !== undefined) {
+        const event = await eventService.getEventById(listing.eventId);
+        if (event.organizerId !== user.id && !isTopTrustedSeller(user.email)) {
+          throw new HttpError(
+            403,
+            "Only the event organizer or a top trusted seller can change this event's image."
+          );
+        }
+        await eventService.updateEvent({
+          eventId: listing.eventId,
+          imageUrl: input.eventImageUrl
+        });
+      }
       const updated = await listingService.updateListing({
         listingId: req.params.listingId,
         title: input.title,
         seatType: input.seatType,
         priceCents: input.priceCents,
         quantity: input.quantity,
-        notes: input.notes
+        notes: input.notes,
+        soldOut: input.soldOut
       });
-      if (input.eventImageUrl !== undefined) {
-        await eventService.updateEvent({
-          eventId: updated.eventId,
-          imageUrl: input.eventImageUrl
-        });
-      }
       res.status(200).json({ listing: updated });
     } catch (error) {
       next(error);

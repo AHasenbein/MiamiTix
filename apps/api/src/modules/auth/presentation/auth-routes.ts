@@ -101,6 +101,17 @@ export function createAuthRoutes(
     }
   });
 
+  router.get("/account/wishlist", async (req, res, next) => {
+    try {
+      const token = extractBearerToken(req.headers.authorization);
+      const user = await authService.getCurrentUser(token);
+      const eventIds = await wishlistRepository.listEventIdsByUserId(user.id);
+      res.status(200).json({ eventIds });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.post("/account/wishlist", async (req, res, next) => {
     try {
       const token = extractBearerToken(req.headers.authorization);

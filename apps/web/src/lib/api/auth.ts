@@ -51,6 +51,8 @@ export interface AccountOverview {
     quantity: number;
     buyerPhone: string;
     status: "pending" | "contacted" | "cancelled";
+    unitPriceCents?: number;
+    eventStartAt?: string;
     createdAt: string;
   }>;
   ticketRequestsIncoming: Array<{
@@ -59,9 +61,12 @@ export interface AccountOverview {
     eventId: string;
     eventTitle: string;
     buyerId: string;
+    buyerName?: string;
     quantity: number;
     buyerPhone: string;
     status: "pending" | "contacted" | "cancelled";
+    unitPriceCents?: number;
+    eventStartAt?: string;
     createdAt: string;
   }>;
 }
@@ -110,6 +115,13 @@ export function getAccountOverview(token: string): Promise<AccountOverview> {
   return apiRequest<AccountOverview>("/api/v1/auth/account/overview", { token });
 }
 
+export async function listWishlistEventIds(token: string): Promise<string[]> {
+  const response = await apiRequest<{ eventIds: string[] }>("/api/v1/auth/account/wishlist", {
+    token
+  });
+  return response.eventIds ?? [];
+}
+
 export function addEventToWishlist(eventId: string, token: string): Promise<{ message: string }> {
   return apiRequest<{ message: string }>("/api/v1/auth/account/wishlist", {
     method: "POST",
@@ -122,7 +134,7 @@ export function removeEventFromWishlist(
   eventId: string,
   token: string
 ): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>(`/api/v1/auth/account/wishlist/${eventId}`, {
+  return apiRequest<{ message: string }>(`/api/v1/auth/account/wishlist/${encodeURIComponent(eventId)}`, {
     method: "DELETE",
     token
   });

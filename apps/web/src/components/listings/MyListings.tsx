@@ -5,6 +5,7 @@ import { ApiClientError } from "@/lib/api/client";
 import type { Listing } from "@/lib/api/listings";
 import { listMyListings } from "@/lib/api/listings";
 import { readAuthToken } from "@/lib/auth/token-storage";
+import { hasEventStarted } from "@/lib/datetime";
 import { Alert } from "../ui/Alert";
 import { ButtonLink } from "../ui/ButtonLink";
 import { SurfaceCard } from "../ui/SurfaceCard";
@@ -87,9 +88,13 @@ export function MyListings() {
               {listing.eventTitle} - {listing.eventCity} -{" "}
               {new Date(listing.eventStartAt).toLocaleDateString()}
             </p>
-            <p className={`text-sm ${listing.soldOut ? "text-danger" : "text-success"}`}>
-              {listing.soldOut ? "Sold out" : "Active"}
-            </p>
+            {hasEventStarted(listing.eventStartAt) ? (
+              <p className="muted-text text-sm">Event ended</p>
+            ) : (
+              <p className={`text-sm ${listing.soldOut ? "text-danger" : "text-success"}`}>
+                {listing.soldOut ? "Sold out" : "Active"}
+              </p>
+            )}
           </SurfaceCard>
         ))
       ) : (
