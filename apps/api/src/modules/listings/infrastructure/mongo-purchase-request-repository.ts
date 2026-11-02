@@ -11,6 +11,7 @@ interface PurchaseRequestDocument {
   sellerId: string;
   quantity: number;
   buyerPhone: string;
+  unitPriceCents?: number;
   status: PurchaseRequest["status"];
   createdAt: Date;
   updatedAt: Date;
@@ -39,6 +40,7 @@ export class MongoPurchaseRequestRepository implements PurchaseRequestRepository
       sellerId: purchaseRequest.sellerId,
       quantity: purchaseRequest.quantity,
       buyerPhone: purchaseRequest.buyerPhone,
+      unitPriceCents: purchaseRequest.unitPriceCents,
       status: purchaseRequest.status,
       createdAt: purchaseRequest.createdAt,
       updatedAt: purchaseRequest.updatedAt
@@ -58,6 +60,23 @@ export class MongoPurchaseRequestRepository implements PurchaseRequestRepository
     return docs.map((doc) => this.fromDocument(doc));
   }
 
+  async listByListingId(listingId: string): Promise<PurchaseRequest[]> {
+    const collection = await this.getCollection();
+    const docs = await collection.find({ listingId }).sort({ createdAt: -1 }).toArray();
+    return docs.map((doc) => this.fromDocument(doc));
+  }
+
+  async findById(id: string): Promise<PurchaseRequest | null> {
+    const collection = await this.getCollection();
+    const doc = await collection.findOne({ _id: id });
+    return doc ? this.fromDocument(doc) : null;
+  }
+
+  async updateStatus(id: string, status: PurchaseRequest["status"]): Promise<void> {
+    const collection = await this.getCollection();
+    await collection.updateOne({ _id: id }, { $set: { status, updatedAt: new Date() } });
+  }
+
   private fromDocument(doc: PurchaseRequestDocument): PurchaseRequest {
     return {
       id: doc._id,
@@ -67,6 +86,7 @@ export class MongoPurchaseRequestRepository implements PurchaseRequestRepository
       sellerId: doc.sellerId,
       quantity: doc.quantity,
       buyerPhone: doc.buyerPhone,
+      unitPriceCents: doc.unitPriceCents,
       status: doc.status,
       createdAt: new Date(doc.createdAt),
       updatedAt: new Date(doc.updatedAt)

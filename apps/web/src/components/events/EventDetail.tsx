@@ -1,16 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import type { Event } from "@/lib/api/events";
-import { addEventToWishlist, getCurrentUser } from "@/lib/api/auth";
+import {
+  addEventToWishlist,
+  getCurrentUser,
+  listWishlistEventIds,
+  removeEventFromWishlist
+} from "@/lib/api/auth";
 import type { Listing } from "@/lib/api/listings";
 import { getEvent, updateEvent, uploadEventImage } from "@/lib/api/events";
 import { ApiClientError } from "@/lib/api/client";
 import { listListings } from "@/lib/api/listings";
 import { readAuthToken } from "@/lib/auth/token-storage";
-import { toDateTimeLocalValue } from "@/lib/datetime";
+import { formatEventDateTime, hasEventStarted, toDateTimeLocalValue } from "@/lib/datetime";
 import { ListingCard } from "../listings/ListingCard";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
@@ -24,7 +30,12 @@ interface EventDetailProps {
 }
 
 export function EventDetail({ eventId }: EventDetailProps) {
+  const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
+  const [isLoadingListings, setIsLoadingListings] = useState(true);
+  const [isTrustedSeller, setIsTrustedSeller] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isUpdatingWishlist, setIsUpdatingWishlist] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isTopTrustedSeller, setIsTopTrustedSeller] = useState(false);
@@ -91,6 +102,10 @@ export function EventDetail({ eventId }: EventDetailProps) {
               : "Could not load ticket listings right now."
           );
         }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingListings(false);
+        }
       }
     }
 
@@ -100,10 +115,15 @@ export function EventDetail({ eventId }: EventDetailProps) {
         return;
       }
       try {
-        const response = await getCurrentUser(token);
+        const [response, wishlistIds] = await Promise.all([
+          getCurrentUser(token),
+          listWishlistEventIds(token).catch(() => [] as string[])
+        ]);
         if (!cancelled) {
           setCurrentUserId(response.user.id);
           setIsTopTrustedSeller(response.user.isTopTrustedSeller);
+          setIsTrustedSeller(response.user.isTrustedSeller);
+          setIsWishlisted(wishlistIds.includes(eventId));
         }
       } catch {
         // Ignore and keep page usable.
@@ -145,7 +165,16 @@ export function EventDetail({ eventId }: EventDetailProps) {
       return;
     }
 
-    const normalizedStartAt = editStartAt ? new Date(editStartAt).toISOString() : event.startAt;
+    if (editTitle.trim().length < 2 || editCity.trim().length < 2) {
+      setEditErrorMessage("Title and city need at least 2 characters.");
+      return;
+    }
+    const parsedStartAt = editStartAt ? new Date(editStartAt) : null;
+    if (parsedStartAt && Number.isNaN(parsedStartAt.getTime())) {
+      setEditErrorMessage("Enter a valid start date and time.");
+      return;
+    }
+    const normalizedStartAt = parsedStartAt ? parsedStartAt.toISOString() : event.startAt;
     setIsSavingEvent(true);
     setIsUploadingImage(Boolean(editImageDataToUpload));
     setEditErrorMessage("");
@@ -176,7 +205,9 @@ export function EventDetail({ eventId }: EventDetailProps) {
       setWishlistMessage("Event updated.");
     } catch (error) {
       setEditErrorMessage(
-        error instanceof ApiClientError ? error.message : "Could not update event."
+        error instanceof ApiClientError
+          ? error.issues?.[0]?.message ?? error.message
+          : "Could not update event."
       );
     } finally {
       setIsSavingEvent(false);
@@ -196,6 +227,34 @@ export function EventDetail({ eventId }: EventDetailProps) {
     setEditImageDataToUpload("");
   }
 
+  async function handleToggleWishlist() {
+    const token = readAuthToken();
+    if (!token || !event) {
+      router.push(`/auth/login?returnTo=${encodeURIComponent(`/events/${eventId}`)}`);
+      return;
+    }
+    const next = !isWishlisted;
+    setIsUpdatingWishlist(true);
+    setIsWishlisted(next);
+    setWishlistMessage("");
+    try {
+      if (next) {
+        await addEventToWishlist(event.id, token);
+      } else {
+        await removeEventFromWishlist(event.id, token);
+      }
+      setWishlistMessage(next ? "Added to wishlist." : "Removed from wishlist.");
+    } catch (error) {
+      setIsWishlisted(!next);
+      setWishlistMessage(
+        error instanceof ApiClientError ? error.message : "Could not update wishlist."
+      );
+    } finally {
+      setIsUpdatingWishlist(false);
+    }
+  }
+
+  const eventEnded = hasEventStarted(event.startAt);
   const shouldShowVenue = Boolean(event.venue?.trim()) && event.venue.trim() !== "TBD";
   const shouldShowDescription =
     Boolean(event.description?.trim()) &&
@@ -236,7 +295,8 @@ export function EventDetail({ eventId }: EventDetailProps) {
             ) : null}
             <p className="muted-text text-sm">
               {shouldShowVenue ? `${event.venue} - ` : ""}
-              {new Date(event.startAt).toLocaleString()}
+              {formatEventDateTime(event.startAt)}
+              {eventEnded ? " (ended)" : ""}
             </p>
             {shouldShowDescription ? (
               <p className="text-sm text-white/90">{event.description}</p>
@@ -244,31 +304,24 @@ export function EventDetail({ eventId }: EventDetailProps) {
           </div>
         </div>
         <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap">
-          <ButtonLink href="/listings/new" className="w-full sm:w-auto">
-            <span className="sm:hidden">List this event</span>
-            <span className="hidden sm:inline">Trusted sellers: list this event</span>
-          </ButtonLink>
+          {isTrustedSeller && !eventEnded ? (
+            <ButtonLink
+              href={`/listings/new?eventId=${encodeURIComponent(event.id)}`}
+              className="w-full sm:w-auto"
+            >
+              <span className="sm:hidden">List this event</span>
+              <span className="hidden sm:inline">Trusted sellers: list this event</span>
+            </ButtonLink>
+          ) : null}
           <Button
             variant="secondary"
             type="button"
             className="w-full sm:w-auto"
-            onClick={async () => {
-              const token = readAuthToken();
-              if (!token) {
-                setWishlistMessage("Log in to save events to your wishlist.");
-                return;
-              }
-              try {
-                await addEventToWishlist(event.id, token);
-                setWishlistMessage("Added to wishlist.");
-              } catch (error) {
-                setWishlistMessage(
-                  error instanceof ApiClientError ? error.message : "Could not update wishlist."
-                );
-              }
-            }}
+            disabled={isUpdatingWishlist}
+            aria-pressed={isWishlisted}
+            onClick={handleToggleWishlist}
           >
-            ☆ Wishlist
+            {isWishlisted ? "★ Wishlisted" : "☆ Wishlist"}
           </Button>
         </div>
         {wishlistMessage ? <Alert tone="info">{wishlistMessage}</Alert> : null}
@@ -338,7 +391,11 @@ export function EventDetail({ eventId }: EventDetailProps) {
       <section className="grid gap-3">
         <h2 className="brand-heading text-lg font-semibold">Available ticket listings</h2>
         {listingsErrorMessage ? <Alert tone="error">{listingsErrorMessage}</Alert> : null}
-        {listings.length ? (
+        {isLoadingListings ? (
+          <p className="muted-text text-sm" role="status" aria-live="polite">
+            Loading listings...
+          </p>
+        ) : listings.length ? (
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {listings.map((listing) => (
               <ListingCard listing={listing} key={listing.id} />

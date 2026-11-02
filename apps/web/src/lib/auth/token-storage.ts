@@ -22,6 +22,8 @@ export function clearAuthToken(): void {
   }
 
   window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  // Don't leave the last buyer's phone number behind on a shared device.
+  window.localStorage.removeItem("ticket_splice_buyer_phone");
 }
 
 /** Only allow same-site relative paths as post-login redirects (blocks open redirects). */
@@ -29,5 +31,65 @@ export function safeReturnTo(value: string | null): string | null {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
     return null;
   }
+  return value;
+}
+
+const OAUTH_RETURN_TO_KEY = "ticket_splice_oauth_return_to";
+const BUYER_PHONE_KEY = "ticket_splice_buyer_phone";
+
+/** Google sign-in leaves the site, so remember where to send the user once they come back. */
+export function saveOAuthReturnTo(returnTo: string | null): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  if (returnTo) {
+    window.sessionStorage.setItem(OAUTH_RETURN_TO_KEY, returnTo);
+  } else {
+    window.sessionStorage.removeItem(OAUTH_RETURN_TO_KEY);
+  }
+}
+
+export function takeOAuthReturnTo(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const value = window.sessionStorage.getItem(OAUTH_RETURN_TO_KEY);
+  window.sessionStorage.removeItem(OAUTH_RETURN_TO_KEY);
+  return safeReturnTo(value);
+}
+
+/** Remember the buyer's phone so the next ticket request is prefilled. */
+export function readSavedBuyerPhone(): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return window.localStorage.getItem(BUYER_PHONE_KEY) ?? "";
+}
+
+export function saveBuyerPhone(phone: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.setItem(BUYER_PHONE_KEY, phone);
+}
+
+const OAUTH_NONCE_KEY = "ticket_splice_oauth_nonce";
+
+/** Create and remember a random value tying a Google sign-in to this browser tab. */
+export function createOAuthNonce(): string {
+  const bytes = new Uint8Array(24);
+  window.crypto.getRandomValues(bytes);
+  const nonce = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  window.sessionStorage.setItem(OAUTH_NONCE_KEY, nonce);
+  return nonce;
+}
+
+/** Read and clear the nonce saved by createOAuthNonce(). */
+export function takeOAuthNonce(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const value = window.sessionStorage.getItem(OAUTH_NONCE_KEY);
+  window.sessionStorage.removeItem(OAUTH_NONCE_KEY);
   return value;
 }

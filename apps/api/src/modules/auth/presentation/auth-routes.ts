@@ -12,6 +12,7 @@ import {
 } from "./auth-schemas.js";
 import { HttpError } from "../../../shared/http-error.js";
 import { env } from "../../../config/env.js";
+import { AttemptLimiter, clientIp } from "../../../shared/attempt-limiter.js";
 import type { EventService } from "../../events/application/event-service.js";
 import type { WishlistRepository } from "../../events/domain/wishlist-repository.js";
 import type { ListingService } from "../../listings/application/listing-service.js";
@@ -33,10 +34,20 @@ export function createAuthRoutes(
   wishlistRepository: WishlistRepository
 ): Router {
   const router = Router();
+  const FIFTEEN_MINUTES = 15 * 60 * 1000;
+  // Failed logins: 5 per email and 20 per network per 15 minutes. Success clears the email count.
+  const loginFailuresByEmail = new AttemptLimiter(5, FIFTEEN_MINUTES);
+  const loginFailuresByIp = new AttemptLimiter(20, FIFTEEN_MINUTES);
+  const registrationsByIp = new AttemptLimiter(10, 60 * 60 * 1000);
+  const resendsByEmail = new AttemptLimiter(3, FIFTEEN_MINUTES);
+  const resendsByIp = new AttemptLimiter(10, FIFTEEN_MINUTES);
 
   router.post("/register", async (req, res, next) => {
     try {
       const input = registerSchema.parse(req.body);
+      const ipKey = clientIp(req);
+      registrationsByIp.assertAllowed(ipKey, "Too many sign-ups from this network.");
+      registrationsByIp.record(ipKey);
       const result = await authService.register({
         email: input.email,
         displayName: input.displayName,
@@ -51,7 +62,22 @@ export function createAuthRoutes(
   router.post("/login", async (req, res, next) => {
     try {
       const input = loginSchema.parse(req.body);
-      const result = await authService.login(input);
+      const emailKey = input.email.trim().toLowerCase();
+      const ipKey = clientIp(req);
+      const limitMessage = "Too many failed login attempts.";
+      loginFailuresByEmail.assertAllowed(emailKey, limitMessage);
+      loginFailuresByIp.assertAllowed(ipKey, limitMessage);
+      let result;
+      try {
+        result = await authService.login(input);
+      } catch (error) {
+        if (error instanceof HttpError && error.statusCode === 401) {
+          loginFailuresByEmail.record(emailKey);
+          loginFailuresByIp.record(ipKey);
+        }
+        throw error;
+      }
+      loginFailuresByEmail.reset(emailKey);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -101,6 +127,17 @@ export function createAuthRoutes(
     }
   });
 
+  router.get("/account/wishlist", async (req, res, next) => {
+    try {
+      const token = extractBearerToken(req.headers.authorization);
+      const user = await authService.getCurrentUser(token);
+      const eventIds = await wishlistRepository.listEventIdsByUserId(user.id);
+      res.status(200).json({ eventIds });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.post("/account/wishlist", async (req, res, next) => {
     try {
       const token = extractBearerToken(req.headers.authorization);
@@ -139,7 +176,11 @@ export function createAuthRoutes(
         throw new HttpError(400, "Unsupported OAuth provider.");
       }
 
-      const state = oauthStateStore.issue();
+      const nonce = typeof req.query.nonce === "string" ? req.query.nonce : undefined;
+      if (nonce !== undefined && !/^[A-Za-z0-9_-]{16,128}$/.test(nonce)) {
+        throw new HttpError(400, "Invalid sign-in request.");
+      }
+      const state = oauthStateStore.issue(nonce);
       const adapter = oauthProviderRegistry.getProvider(provider);
       const authorizationUrl = await adapter.getAuthorizationUrl(state);
 
@@ -165,13 +206,16 @@ export function createAuthRoutes(
         throw new HttpError(400, "Missing OAuth callback parameters.");
       }
 
-      oauthStateStore.consumeOrThrow(state);
+      const { browserNonce } = oauthStateStore.consumeOrThrow(state);
       const adapter = oauthProviderRegistry.getProvider(provider);
       const identity = await adapter.exchangeCodeForIdentity(code);
       const result = await authService.loginOrRegisterOAuth(provider, identity);
 
       const redirectUrl = new URL("/auth/oauth/callback", env.APP_WEB_URL);
       redirectUrl.searchParams.set("token", result.token);
+      if (browserNonce) {
+        redirectUrl.searchParams.set("nonce", browserNonce);
+      }
       res.redirect(302, redirectUrl.toString());
     } catch (error) {
       const redirectUrl = new URL("/auth/oauth/callback", env.APP_WEB_URL);
@@ -195,6 +239,13 @@ export function createAuthRoutes(
   router.post("/verify-email/resend", async (req, res, next) => {
     try {
       const input = resendVerificationSchema.parse(req.body);
+      const emailKey = input.email.trim().toLowerCase();
+      const ipKey = clientIp(req);
+      const limitMessage = "Too many verification emails requested.";
+      resendsByEmail.assertAllowed(emailKey, limitMessage);
+      resendsByIp.assertAllowed(ipKey, limitMessage);
+      resendsByEmail.record(emailKey);
+      resendsByIp.record(ipKey);
       const result = await authService.resendVerificationEmail(input.email);
       res.status(200).json(result);
     } catch (error) {

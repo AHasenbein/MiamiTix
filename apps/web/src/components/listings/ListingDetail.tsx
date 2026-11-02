@@ -9,7 +9,8 @@ import { ApiClientError } from "@/lib/api/client";
 import { getEvent, uploadEventImage } from "@/lib/api/events";
 import { deleteListing, getListing, purchaseListing, updateListing } from "@/lib/api/listings";
 import type { Listing } from "@/lib/api/listings";
-import { readAuthToken } from "@/lib/auth/token-storage";
+import { readAuthToken, readSavedBuyerPhone, saveBuyerPhone } from "@/lib/auth/token-storage";
+import { formatEventDateTime, hasEventStarted } from "@/lib/datetime";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { ButtonLink } from "../ui/ButtonLink";
@@ -29,6 +30,9 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
   const [listing, setListing] = useState<Listing | null>(null);
   const [eventImageUrl, setEventImageUrl] = useState("");
   const [eventImageDataToUpload, setEventImageDataToUpload] = useState("");
+  // Only send the shared event image when the user actually changed it, so a failed event
+  // lookup (empty state) can't wipe the image on save.
+  const [isEventImageDirty, setIsEventImageDirty] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isTopTrustedSeller, setIsTopTrustedSeller] = useState(false);
   const [quantity, setQuantity] = useState("1");
@@ -36,6 +40,10 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
   const [editTitle, setEditTitle] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editQuantity, setEditQuantity] = useState("");
+  const [editSeatType, setEditSeatType] = useState<Listing["seatType"]>("GA");
+  const [editNotes, setEditNotes] = useState("");
+  const [hasSentRequest, setHasSentRequest] = useState(false);
+  const [isTogglingSoldOut, setIsTogglingSoldOut] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditingListing, setIsEditingListing] = useState(false);
@@ -57,9 +65,12 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
           setEditTitle(response.title);
           setEditPrice((response.priceCents / 100).toFixed(2));
           setEditQuantity(String(response.quantity));
+          setEditSeatType(response.seatType);
+          setEditNotes(response.notes ?? "");
         }
-        const eventResponse = await getEvent(response.eventId);
-        if (!cancelled) {
+        // The image is decorative here; a failed event lookup shouldn't show an error banner.
+        const eventResponse = await getEvent(response.eventId).catch(() => null);
+        if (!cancelled && eventResponse) {
           setEventImageUrl(eventResponse.imageUrl ?? "");
           setEventImageDataToUpload("");
         }
@@ -86,6 +97,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
         if (!cancelled) {
           setCurrentUserId(response.user.id);
           setIsTopTrustedSeller(response.user.isTopTrustedSeller);
+          setPhone((current) => current || readSavedBuyerPhone());
         }
       } catch {
         // Ignore user lookup errors and keep page usable.
@@ -121,7 +133,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
       setErrorMessage(`You can request up to ${maxRequestable} ticket${maxRequestable === 1 ? "" : "s"}.`);
       return;
     }
-    if (phone.trim().length < 7) {
+    if (phone.replace(/\D/g, "").length < 7) {
       setErrorMessage("Enter a valid phone number so the seller can contact you.");
       return;
     }
@@ -131,9 +143,22 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
     setMessage("");
     try {
       const result = await purchaseListing(listing.id, parsedQuantity, phone.trim(), token);
+      saveBuyerPhone(phone.trim());
+      setHasSentRequest(true);
       setMessage(result.message);
     } catch (error) {
-      setErrorMessage(error instanceof ApiClientError ? error.message : "Request failed.");
+      if (error instanceof ApiClientError && error.statusCode === 401) {
+        router.push(`/auth/login?returnTo=${encodeURIComponent(`/listings/${listingId}`)}`);
+        return;
+      }
+      if (error instanceof ApiClientError && error.statusCode === 409) {
+        setHasSentRequest(true);
+      }
+      setErrorMessage(
+        error instanceof ApiClientError
+          ? error.issues?.[0]?.message ?? error.message
+          : "Request failed."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -165,16 +190,18 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
     try {
       // An empty string tells the API to clear the image (undefined would leave it unchanged).
       let uploadedEventImageUrl = eventImageUrl;
-      if (eventImageDataToUpload) {
+      if (isEventImageDirty && eventImageDataToUpload) {
         uploadedEventImageUrl = await uploadEventImage(eventImageDataToUpload, token);
       }
       const updated = await updateListing(
         listing.id,
         {
-          title: editTitle.trim(),
+          title: editTitle.trim() || undefined,
+          seatType: editSeatType,
           priceCents: parsedPrice,
           quantity: parsedQuantity,
-          eventImageUrl: uploadedEventImageUrl
+          notes: editNotes,
+          eventImageUrl: isEventImageDirty ? uploadedEventImageUrl : undefined
         },
         token
       );
@@ -182,11 +209,18 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
       setEditTitle(updated.title);
       setEditPrice((updated.priceCents / 100).toFixed(2));
       setEditQuantity(String(updated.quantity));
+      setEditSeatType(updated.seatType);
+      setEditNotes(updated.notes ?? "");
       setEventImageUrl(uploadedEventImageUrl);
       setEventImageDataToUpload("");
+      setIsEventImageDirty(false);
       setMessage("Listing updated.");
     } catch (error) {
-      setErrorMessage(error instanceof ApiClientError ? error.message : "Could not update listing.");
+      setErrorMessage(
+        error instanceof ApiClientError
+          ? error.issues?.[0]?.message ?? error.message
+          : "Could not update listing."
+      );
     } finally {
       setIsEditingListing(false);
       setIsUploadingImage(false);
@@ -197,12 +231,36 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
     setImageError("");
     setEventImageUrl(dataUrl);
     setEventImageDataToUpload(dataUrl);
+    setIsEventImageDirty(true);
   }
 
   function clearEventImage() {
     setImageError("");
     setEventImageUrl("");
     setEventImageDataToUpload("");
+    setIsEventImageDirty(true);
+  }
+
+  async function handleToggleSoldOut() {
+    const token = readAuthToken();
+    if (!token || !listing) {
+      router.push(`/auth/login?returnTo=${encodeURIComponent(`/listings/${listingId}`)}`);
+      return;
+    }
+    setIsTogglingSoldOut(true);
+    setErrorMessage("");
+    setMessage("");
+    try {
+      const updated = await updateListing(listing.id, { soldOut: !listing.soldOut }, token);
+      setListing(updated);
+      setMessage(updated.soldOut ? "Listing marked as sold out." : "Listing is live again.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof ApiClientError ? error.message : "Could not update listing."
+      );
+    } finally {
+      setIsTogglingSoldOut(false);
+    }
   }
 
   async function handleDeleteListing() {
@@ -246,6 +304,18 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
   const canEditListing = Boolean(currentUserId) && (currentUserId === listing.sellerId || isTopTrustedSeller);
   const canDeleteListing = currentUserId === listing.sellerId;
   const isSoldOut = listing.soldOut || listing.quantity <= 0;
+  const isOwnListing = Boolean(currentUserId) && currentUserId === listing.sellerId;
+  const eventEnded = hasEventStarted(listing.eventStartAt);
+  const requestsClosed = isSoldOut || eventEnded || hasSentRequest;
+  const requestButtonLabel = eventEnded
+    ? "Event ended"
+    : isSoldOut
+      ? "Sold out"
+      : hasSentRequest
+        ? "Request sent"
+        : isSubmitting
+          ? "Sending request..."
+          : "Request tickets";
 
   return (
     <SurfaceCard className="grid max-w-xl gap-4 p-5 sm:p-8">
@@ -277,41 +347,70 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
         in {listing.eventCity}
       </p>
       <p className="muted-text text-sm">
-        Event time: {new Date(listing.eventStartAt).toLocaleString()}
+        Event time: {formatEventDateTime(listing.eventStartAt)}
+        {eventEnded ? " (ended)" : ""}
       </p>
       <p className="text-sm text-white/90">
         ${(listing.priceCents / 100).toFixed(2)} per ticket (reference price)
       </p>
       <p className="muted-text text-sm">Seat type: {listing.seatType}</p>
       <p className="muted-text text-sm">
-        {listing.quantity} ticket{listing.quantity === 1 ? "" : "s"} available
+        {listing.soldOut
+          ? "Sold out"
+          : `${listing.quantity} ticket${listing.quantity === 1 ? "" : "s"} available`}
       </p>
-      {listing.notes ? <p className="muted-text text-sm">{listing.notes}</p> : null}
+      {listing.notes ? (
+        <p className="muted-text whitespace-pre-line text-sm">{listing.notes}</p>
+      ) : null}
 
-      <form className="grid gap-3" onSubmit={handlePurchase}>
-        <Input
-          label="Tickets requested"
-          max={Math.max(1, Math.min(MAX_TICKETS_PER_REQUEST, listing.quantity))}
-          min={1}
-          onChange={(event) => setQuantity(event.target.value)}
-          required
-          type="number"
-          value={quantity}
-        />
-        <Input
-          label="Your phone number"
-          onChange={(event) => setPhone(event.target.value)}
-          placeholder="+1 555 555 5555"
-          required
-          type="tel"
-          value={phone}
-        />
-        <Button disabled={isSubmitting || isSoldOut} type="submit">
-          {isSoldOut ? "Sold out" : isSubmitting ? "Sending request..." : "Request tickets"}
-        </Button>
-      </form>
+      {isOwnListing ? (
+        <Alert tone="info">
+          This is your listing. Buyer requests show up on your account page.
+        </Alert>
+      ) : (
+        <form className="grid gap-3" onSubmit={handlePurchase}>
+          <Input
+            label="Tickets requested"
+            max={Math.max(1, Math.min(MAX_TICKETS_PER_REQUEST, listing.quantity))}
+            min={1}
+            inputMode="numeric"
+            onChange={(event) => setQuantity(event.target.value)}
+            required
+            type="number"
+            value={quantity}
+            disabled={requestsClosed}
+          />
+          <Input
+            label="Your phone number"
+            autoComplete="tel"
+            inputMode="tel"
+            name="tel"
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="+1 555 555 5555"
+            required
+            type="tel"
+            value={phone}
+            disabled={requestsClosed}
+          />
+          <Button disabled={isSubmitting || requestsClosed} type="submit">
+            {requestButtonLabel}
+          </Button>
+        </form>
+      )}
       {canEditListing ? (
         <div className="grid gap-3">
+          <Button
+            disabled={isTogglingSoldOut}
+            onClick={handleToggleSoldOut}
+            type="button"
+            variant="secondary"
+          >
+            {isTogglingSoldOut
+              ? "Saving..."
+              : listing.soldOut
+                ? "Relist tickets"
+                : "Mark as sold out"}
+          </Button>
           <Button
             onClick={() => setIsEditFormOpen((current) => !current)}
             type="button"
@@ -330,8 +429,21 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
                 onChange={(event) => setEditTitle(event.target.value)}
                 value={editTitle}
               />
+              <label className="grid gap-1.5 text-sm">
+                <span className="muted-text">Seat type</span>
+                <select
+                  value={editSeatType}
+                  onChange={(event) => setEditSeatType(event.target.value as Listing["seatType"])}
+                  className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(62,164,255,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
+                >
+                  <option value="GA">GA</option>
+                  <option value="VIP">VIP</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </label>
               <Input
                 label="Price per ticket (USD)"
+                inputMode="decimal"
                 min="1"
                 onChange={(event) => setEditPrice(event.target.value)}
                 step="0.01"
@@ -340,11 +452,19 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
               />
               <Input
                 label="Quantity available"
+                inputMode="numeric"
                 max={20}
                 min={1}
                 onChange={(event) => setEditQuantity(event.target.value)}
                 type="number"
                 value={editQuantity}
+              />
+              <Input
+                label="Notes for buyers (optional)"
+                maxLength={600}
+                onChange={(event) => setEditNotes(event.target.value)}
+                placeholder="Section, transfer method, pickup details..."
+                value={editNotes}
               />
               <EventImagePicker
                 variant="field"

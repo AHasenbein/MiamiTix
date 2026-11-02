@@ -68,8 +68,16 @@ export async function listEvents(options: ListEventsOptions = {}): Promise<Event
   return response.events;
 }
 
+export async function listArtistSuggestions(query: string, limit = 8): Promise<string[]> {
+  const params = new URLSearchParams({ q: query.trim(), limit: String(limit) });
+  const response = await apiRequest<{ artists: string[] }>(
+    `/api/v1/events/artists?${params.toString()}`
+  );
+  return response.artists ?? [];
+}
+
 export async function getEvent(eventId: string): Promise<Event> {
-  const response = await apiRequest<EventResponse>(`/api/v1/events/${eventId}`);
+  const response = await apiRequest<EventResponse>(`/api/v1/events/${encodeURIComponent(eventId)}`);
   return response.event;
 }
 

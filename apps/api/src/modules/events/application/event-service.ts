@@ -79,7 +79,8 @@ export class EventService {
     const normalizedCity = input.city?.trim().toLowerCase();
     const filtered = events
       .filter((event) => (input.upcomingOnly ?? true ? event.startAt.getTime() >= now : true))
-      .filter((event) => (input.ids?.length ? input.ids.includes(event.id) : true))
+      // An empty ids list means "none" (e.g. no active listings), not "no filter".
+      .filter((event) => (input.ids ? input.ids.includes(event.id) : true))
       .filter((event) =>
         normalizedQuery
           ? `${event.title} ${event.venue} ${event.city} ${event.description ?? ""} ${event.artists.join(" ")}`.toLowerCase().includes(normalizedQuery)
@@ -176,23 +177,28 @@ export class EventService {
       throw new HttpError(400, "Event title is required.");
     }
 
+    const parsedStartAt = input.startAt ? new Date(input.startAt) : null;
+    if (parsedStartAt && Number.isNaN(parsedStartAt.getTime())) {
+      throw new HttpError(400, "Event date/time is invalid.");
+    }
+
     const allEvents = await this.eventRepository.list();
     // Only reuse upcoming events: a recurring night (same title + city) must not attach new
-    // listings to last week's past event, which is hidden from browse.
+    // listings to last week's past event, which is hidden from browse. When the seller gives a
+    // date, it must also be the same night, so next week's edition gets its own event.
     const now = Date.now();
+    const sameNightWindowMs = 1000 * 60 * 60 * 12;
     const existing = allEvents.find(
       (event) =>
         event.startAt.getTime() >= now &&
         event.title.toLowerCase() === normalizedTitle.toLowerCase() &&
-        event.city.toLowerCase() === input.city.trim().toLowerCase()
+        event.city.toLowerCase() === input.city.trim().toLowerCase() &&
+        (parsedStartAt
+          ? Math.abs(event.startAt.getTime() - parsedStartAt.getTime()) <= sameNightWindowMs
+          : true)
     );
     if (existing) {
       return this.toResponse(existing);
-    }
-
-    const parsedStartAt = input.startAt ? new Date(input.startAt) : null;
-    if (parsedStartAt && Number.isNaN(parsedStartAt.getTime())) {
-      throw new HttpError(400, "Event date/time is invalid.");
     }
 
     const created = await this.eventRepository.create({

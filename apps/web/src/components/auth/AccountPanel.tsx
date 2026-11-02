@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AccountOverview, AuthUser } from "@/lib/api/auth";
-import { getAccountOverview, getCurrentUser } from "@/lib/api/auth";
+import { getAccountOverview, getCurrentUser, removeEventFromWishlist } from "@/lib/api/auth";
+import { updatePurchaseRequestStatus } from "@/lib/api/listings";
 import { ApiClientError } from "@/lib/api/client";
 import { clearAuthToken, readAuthToken } from "@/lib/auth/token-storage";
 import { deleteAllEventsLocal } from "@/lib/api/events";
@@ -21,6 +22,7 @@ export function AccountPanel() {
   const [adminMessage, setAdminMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isDeletingAllEvents, setIsDeletingAllEvents] = useState(false);
+  const [busyIds, setBusyIds] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,12 +35,15 @@ export function AccountPanel() {
       }
 
       try {
-        const [userResult, accountResult] = await Promise.all([
-          getCurrentUser(token),
-          getAccountOverview(token)
-        ]);
+        // Load profile and activity separately so an overview failure doesn't hide the profile.
+        const overviewPromise = getAccountOverview(token);
+        overviewPromise.catch(() => undefined);
+        const userResult = await getCurrentUser(token);
         if (!cancelled) {
           setUser(userResult.user);
+        }
+        const accountResult = await overviewPromise;
+        if (!cancelled) {
           setOverview(accountResult);
         }
       } catch (error) {
@@ -67,6 +72,60 @@ export function AccountPanel() {
       cancelled = true;
     };
   }, [router]);
+
+  async function runBusy(id: string, action: (token: string) => Promise<void>) {
+    const token = readAuthToken();
+    if (!token) {
+      router.push(`/auth/login?returnTo=${encodeURIComponent("/account")}`);
+      return;
+    }
+    if (busyIds.includes(id)) {
+      return;
+    }
+    setBusyIds((current) => [...current, id]);
+    setErrorMessage("");
+    try {
+      await action(token);
+    } catch (error) {
+      setErrorMessage(error instanceof ApiClientError ? error.message : "Something went wrong.");
+    } finally {
+      setBusyIds((current) => current.filter((value) => value !== id));
+    }
+  }
+
+  function setRequestStatus(
+    requestId: string,
+    status: "contacted" | "cancelled",
+    list: "ticketRequestsSent" | "ticketRequestsIncoming"
+  ) {
+    void runBusy(requestId, async (token) => {
+      await updatePurchaseRequestStatus(requestId, status, token);
+      setOverview((current) =>
+        current
+          ? {
+              ...current,
+              [list]: current[list].map((request) =>
+                request.requestId === requestId ? { ...request, status } : request
+              )
+            }
+          : current
+      );
+    });
+  }
+
+  function removeWishlistedEvent(eventId: string) {
+    void runBusy(eventId, async (token) => {
+      await removeEventFromWishlist(eventId, token);
+      setOverview((current) =>
+        current
+          ? {
+              ...current,
+              wishlistedEvents: current.wishlistedEvents.filter((event) => event.id !== eventId)
+            }
+          : current
+      );
+    });
+  }
 
   async function handleDeleteAllEvents() {
     const token = readAuthToken();
@@ -162,12 +221,25 @@ export function AccountPanel() {
                 {overview.wishlistedEvents.map((event) => (
                   <li
                     key={event.id}
-                    className="rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2"
+                    className="flex items-start justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2"
                   >
-                    <Link href={`/events/${event.id}`} className="underline-offset-4 hover:underline">
-                      {event.title}
-                    </Link>
-                    <p className="muted-text text-xs">{event.city}</p>
+                    <div className="min-w-0">
+                      <Link href={`/events/${event.id}`} className="underline-offset-4 hover:underline">
+                        {event.title}
+                      </Link>
+                      <p className="muted-text text-xs">
+                        {event.city}
+                        {event.startAt ? ` - ${new Date(event.startAt).toLocaleDateString()}` : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="muted-text shrink-0 text-xs underline underline-offset-4 disabled:opacity-60"
+                      disabled={busyIds.includes(event.id)}
+                      onClick={() => removeWishlistedEvent(event.id)}
+                    >
+                      Remove
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -185,10 +257,31 @@ export function AccountPanel() {
                     key={request.requestId}
                     className="rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2"
                   >
-                    <p>{request.eventTitle}</p>
+                    <Link
+                      href={`/listings/${request.listingId}`}
+                      className="underline-offset-4 hover:underline"
+                    >
+                      {request.eventTitle}
+                    </Link>
                     <p className="muted-text text-xs">
-                      {request.city} - {request.quantity} ticket(s) - {request.status}
+                      {request.city} - {request.quantity} ticket{request.quantity === 1 ? "" : "s"}
+                      {request.unitPriceCents
+                        ? ` at $${(request.unitPriceCents / 100).toFixed(2)} each`
+                        : ""}{" "}
+                      - {request.status} - sent {new Date(request.createdAt).toLocaleDateString()}
                     </p>
+                    {request.status === "pending" ? (
+                      <button
+                        type="button"
+                        className="muted-text mt-1 text-xs underline underline-offset-4 disabled:opacity-60"
+                        disabled={busyIds.includes(request.requestId)}
+                        onClick={() =>
+                          setRequestStatus(request.requestId, "cancelled", "ticketRequestsSent")
+                        }
+                      >
+                        Cancel request
+                      </button>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -232,10 +325,56 @@ export function AccountPanel() {
                     key={request.requestId}
                     className="rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2"
                   >
-                    <p>{request.eventTitle}</p>
+                    <Link
+                      href={`/listings/${request.listingId}`}
+                      className="underline-offset-4 hover:underline"
+                    >
+                      {request.eventTitle}
+                    </Link>
                     <p className="muted-text text-xs">
-                      Qty {request.quantity} - Buyer phone: {request.buyerPhone} - {request.status}
+                      {request.buyerName ? `${request.buyerName} - ` : ""}Qty {request.quantity}
+                      {request.unitPriceCents
+                        ? ` at $${(request.unitPriceCents / 100).toFixed(2)}`
+                        : ""}{" "}
+                      - Buyer phone:{" "}
+                      <a
+                        href={`tel:${request.buyerPhone.replace(/[^\d+]/g, "")}`}
+                        className="underline underline-offset-4"
+                      >
+                        {request.buyerPhone}
+                      </a>{" "}
+                      - {request.status}
                     </p>
+                    {request.status === "pending" ? (
+                      <div className="mt-1 flex flex-wrap gap-3 text-xs">
+                        <a
+                          href={`sms:${request.buyerPhone.replace(/[^\d+]/g, "")}`}
+                          className="underline underline-offset-4"
+                        >
+                          Text buyer
+                        </a>
+                        <button
+                          type="button"
+                          className="underline underline-offset-4 disabled:opacity-60"
+                          disabled={busyIds.includes(request.requestId)}
+                          onClick={() =>
+                            setRequestStatus(request.requestId, "contacted", "ticketRequestsIncoming")
+                          }
+                        >
+                          Mark contacted
+                        </button>
+                        <button
+                          type="button"
+                          className="muted-text underline underline-offset-4 disabled:opacity-60"
+                          disabled={busyIds.includes(request.requestId)}
+                          onClick={() =>
+                            setRequestStatus(request.requestId, "cancelled", "ticketRequestsIncoming")
+                          }
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
