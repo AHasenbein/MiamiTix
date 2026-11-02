@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -15,6 +15,9 @@ export function OAuthCallbackClient() {
   const error = searchParams.get("error");
   const returnTo = safeReturnTo(searchParams.get("returnTo"));
   const [isRedirectSlow, setIsRedirectSlow] = useState(false);
+  // takeOAuthReturnTo() clears storage, and dev Strict Mode runs effects twice, so hold the
+  // value in a ref to keep the second run from falling back to /dashboard.
+  const storedReturnToRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
     if (token) {
@@ -22,7 +25,10 @@ export function OAuthCallbackClient() {
       const timeout = setTimeout(() => {
         setIsRedirectSlow(true);
       }, 2500);
-      router.replace(returnTo || takeOAuthReturnTo() || "/dashboard");
+      if (storedReturnToRef.current === undefined) {
+        storedReturnToRef.current = takeOAuthReturnTo();
+      }
+      router.replace(returnTo || storedReturnToRef.current || "/dashboard");
       return () => {
         clearTimeout(timeout);
       };
