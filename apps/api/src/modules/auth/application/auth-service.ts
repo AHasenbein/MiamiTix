@@ -189,7 +189,9 @@ export class AuthService {
     return { message: "Email verified. You can now log in." };
   }
 
-  async resendVerificationEmail(email: string): Promise<{ message: string; previewUrl?: string }> {
+  async resendVerificationEmail(
+    email: string
+  ): Promise<{ message: string; verificationPreviewUrl?: string }> {
     if (!env.REQUIRE_EMAIL_VERIFICATION) {
       return { message: "Email verification is currently disabled. You can log in directly." };
     }
@@ -220,7 +222,8 @@ export class AuthService {
       );
       return {
         message: "If an account exists, a verification email has been sent.",
-        previewUrl: env.NODE_ENV === "production" ? undefined : emailResult.previewUrl
+        verificationPreviewUrl:
+          env.NODE_ENV === "production" ? undefined : emailResult.previewUrl
       };
     } catch (error) {
       console.error(
@@ -265,8 +268,11 @@ export class AuthService {
     );
     const mergedUser: User = {
       ...existingUser,
-      emailVerified: true,
-      providers: hasProvider
+      // If the email was never verified, whoever set the existing password never proved they
+      // own the inbox. Drop that password so a pre-registered account can't be taken over once
+      // the real owner signs in with Google.
+      passwordHash: existingUser.emailVerified ? existingUser.passwordHash : undefined,
+      providers: (hasProvider
         ? existingUser.providers
         : [
             ...existingUser.providers,
@@ -275,6 +281,8 @@ export class AuthService {
               providerUserId: identity.providerUserId
             }
           ]
+      ).filter((provider) => existingUser.emailVerified || provider.provider !== "password"),
+      emailVerified: true
     };
     await this.userRepository.update(mergedUser);
 
