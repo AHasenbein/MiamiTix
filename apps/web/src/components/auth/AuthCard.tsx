@@ -12,7 +12,12 @@ import {
   resendVerificationEmail
 } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
-import { safeReturnTo, saveAuthToken, saveOAuthReturnTo } from "@/lib/auth/token-storage";
+import {
+  createOAuthNonce,
+  safeReturnTo,
+  saveAuthToken,
+  saveOAuthReturnTo
+} from "@/lib/auth/token-storage";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -119,7 +124,7 @@ export function AuthCard({ mode }: AuthCardProps) {
   async function handleOAuthLogin(provider: "google" | "apple") {
     setErrorMessage("");
     try {
-      const authorizationUrl = await getOAuthAuthorizationUrl(provider);
+      const authorizationUrl = await getOAuthAuthorizationUrl(provider, createOAuthNonce());
       // The OAuth round trip drops our query string, so keep returnTo for the callback page.
       saveOAuthReturnTo(returnTo);
       window.location.assign(authorizationUrl);

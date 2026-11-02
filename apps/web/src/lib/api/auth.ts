@@ -166,9 +166,12 @@ export async function getOAuthProviders(): Promise<OAuthProvidersResponse> {
 }
 
 export async function getOAuthAuthorizationUrl(
-  provider: OAuthProviderSummary["id"]
+  provider: OAuthProviderSummary["id"],
+  nonce: string
 ): Promise<string> {
-  const response = await apiRequest<OAuthStartResponse>(`/api/v1/auth/oauth/${provider}/start`);
+  const response = await apiRequest<OAuthStartResponse>(
+    `/api/v1/auth/oauth/${provider}/start?nonce=${encodeURIComponent(nonce)}`
+  );
   return response.authorizationUrl;
 }
 

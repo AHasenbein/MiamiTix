@@ -72,3 +72,24 @@ export function saveBuyerPhone(phone: string): void {
   }
   window.localStorage.setItem(BUYER_PHONE_KEY, phone);
 }
+
+const OAUTH_NONCE_KEY = "ticket_splice_oauth_nonce";
+
+/** Create and remember a random value tying a Google sign-in to this browser tab. */
+export function createOAuthNonce(): string {
+  const bytes = new Uint8Array(24);
+  window.crypto.getRandomValues(bytes);
+  const nonce = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  window.sessionStorage.setItem(OAUTH_NONCE_KEY, nonce);
+  return nonce;
+}
+
+/** Read and clear the nonce saved by createOAuthNonce(). */
+export function takeOAuthNonce(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const value = window.sessionStorage.getItem(OAUTH_NONCE_KEY);
+  window.sessionStorage.removeItem(OAUTH_NONCE_KEY);
+  return value;
+}

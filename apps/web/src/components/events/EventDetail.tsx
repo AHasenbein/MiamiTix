@@ -16,7 +16,7 @@ import { getEvent, updateEvent, uploadEventImage } from "@/lib/api/events";
 import { ApiClientError } from "@/lib/api/client";
 import { listListings } from "@/lib/api/listings";
 import { readAuthToken } from "@/lib/auth/token-storage";
-import { hasEventStarted, toDateTimeLocalValue } from "@/lib/datetime";
+import { formatEventDateTime, hasEventStarted, toDateTimeLocalValue } from "@/lib/datetime";
 import { ListingCard } from "../listings/ListingCard";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
@@ -295,7 +295,7 @@ export function EventDetail({ eventId }: EventDetailProps) {
             ) : null}
             <p className="muted-text text-sm">
               {shouldShowVenue ? `${event.venue} - ` : ""}
-              {new Date(event.startAt).toLocaleString()}
+              {formatEventDateTime(event.startAt)}
               {eventEnded ? " (ended)" : ""}
             </p>
             {shouldShowDescription ? (
