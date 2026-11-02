@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Event } from "@/lib/api/events";
+import { miamiTimeSuffix } from "@/lib/datetime";
 import { SurfaceCard } from "../ui/SurfaceCard";
 
 interface EventCardProps {
@@ -23,10 +24,10 @@ export function EventCard({
     month: "short",
     day: "numeric"
   });
-  const timeLabel = startDate.toLocaleTimeString(undefined, {
+  const timeLabel = `${startDate.toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit"
-  });
+  })}${miamiTimeSuffix(event.startAt)}`;
   const shouldShowVenue = Boolean(event.venue?.trim()) && event.venue.trim() !== "TBD";
 
   return (

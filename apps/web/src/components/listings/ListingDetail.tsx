@@ -10,7 +10,7 @@ import { getEvent, uploadEventImage } from "@/lib/api/events";
 import { deleteListing, getListing, purchaseListing, updateListing } from "@/lib/api/listings";
 import type { Listing } from "@/lib/api/listings";
 import { readAuthToken, readSavedBuyerPhone, saveBuyerPhone } from "@/lib/auth/token-storage";
-import { hasEventStarted } from "@/lib/datetime";
+import { formatEventDateTime, hasEventStarted } from "@/lib/datetime";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { ButtonLink } from "../ui/ButtonLink";
@@ -347,7 +347,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
         in {listing.eventCity}
       </p>
       <p className="muted-text text-sm">
-        Event time: {new Date(listing.eventStartAt).toLocaleString()}
+        Event time: {formatEventDateTime(listing.eventStartAt)}
         {eventEnded ? " (ended)" : ""}
       </p>
       <p className="text-sm text-white/90">

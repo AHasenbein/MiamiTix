@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Event } from "@/lib/api/events";
+import { miamiTimeSuffix } from "@/lib/datetime";
 import { listEvents } from "@/lib/api/events";
 
 interface EventsCarouselProps {
@@ -147,10 +148,10 @@ export function EventsCarousel({
               month: "short",
               day: "numeric"
             });
-            const timeLabel = startDate.toLocaleTimeString(undefined, {
+            const timeLabel = `${startDate.toLocaleTimeString(undefined, {
               hour: "numeric",
               minute: "2-digit"
-            });
+            })}${miamiTimeSuffix(event.startAt)}`;
             return (
               <Link
                 key={event.id}
