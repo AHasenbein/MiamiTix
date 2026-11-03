@@ -144,11 +144,10 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
             {!isHome ? (
               <Link
                 href="/"
-                className="inline-flex h-11 shrink-0 items-center gap-1 rounded-[var(--radius-md)] px-2 text-sm font-medium text-[var(--muted)] transition-colors hover:text-white"
+                className="inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-base font-medium text-[var(--muted)] transition-colors hover:text-white"
                 aria-label="Back to homepage"
               >
                 <span aria-hidden="true">←</span>
-                <span>Home</span>
               </Link>
             ) : null}
             {!isEvents ? (
