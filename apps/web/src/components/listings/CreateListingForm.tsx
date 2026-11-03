@@ -409,7 +409,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
             <div className="flex items-center justify-between gap-3">
               <h2 className="brand-heading text-lg font-semibold">1 · Event</h2>
               {eventId ? (
-                <span className="rounded-full border border-[rgba(129,140,248,0.4)] bg-[rgba(129,140,248,0.12)] px-2.5 py-1 text-[10px] font-semibold text-[var(--accent)]">
+                <span className="rounded-full border border-[rgba(255,46,168,0.4)] bg-[rgba(255,46,168,0.12)] px-2.5 py-1 text-[10px] font-semibold text-[var(--accent)]">
                   Matched
                 </span>
               ) : null}
@@ -449,7 +449,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
                         onClick={() => selectSuggestion(eventSuggestion)}
                         className={`min-h-14 rounded-[0.9rem] border px-3.5 py-3 text-left transition active:scale-[0.99] ${
                           selected
-                            ? "border-[rgba(129,140,248,0.65)] bg-[rgba(129,140,248,0.14)]"
+                            ? "border-[rgba(255,46,168,0.65)] bg-[rgba(255,46,168,0.14)]"
                             : "border-[var(--border)] bg-[rgba(250,250,250,0.04)]"
                         }`}
                       >
@@ -543,7 +543,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
                       onClick={() => setSeatType(option.value)}
                       className={`min-h-16 rounded-[0.9rem] border px-2 py-2.5 text-center transition active:scale-[0.98] ${
                         active
-                          ? "border-[rgba(129,140,248,0.65)] bg-[rgba(129,140,248,0.16)]"
+                          ? "border-[rgba(255,46,168,0.65)] bg-[rgba(255,46,168,0.16)]"
                           : "border-[var(--border)] bg-[rgba(250,250,250,0.04)]"
                       }`}
                     >
@@ -756,7 +756,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
             <select
               value={seatType}
               onChange={(event) => setSeatType(event.target.value as "GA" | "VIP" | "OTHER")}
-              className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(129,140,248,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
+              className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(255,46,168,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
             >
               <option value="GA">GA</option>
               <option value="VIP">VIP</option>

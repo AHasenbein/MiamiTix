@@ -137,3 +137,19 @@ export async function deleteAllEventsLocal(token: string): Promise<{
     token
   });
 }
+
+/** The admin-picked "Event of the Month", or null if none is set or it has passed. */
+export async function getFeaturedEvent(): Promise<Event | null> {
+  const response = await apiRequest<{ event: Event | null }>("/api/v1/events/featured");
+  return response.event;
+}
+
+/** Admin only. Pass null to clear the pick. */
+export async function setFeaturedEvent(eventId: string | null, token: string): Promise<Event | null> {
+  const response = await apiRequest<{ event: Event | null }>("/api/v1/events/featured", {
+    method: "PUT",
+    token,
+    body: JSON.stringify({ eventId })
+  });
+  return response.event;
+}

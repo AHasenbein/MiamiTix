@@ -161,7 +161,7 @@ export function EventImagePicker({
             type="button"
             disabled={disabled}
             onClick={openFilePicker}
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] transition hover:border-[rgba(129,140,248,0.55)] hover:bg-[rgba(129,140,248,0.08)] disabled:opacity-60"
+            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] transition hover:border-[rgba(255,46,168,0.55)] hover:bg-[rgba(255,46,168,0.08)] disabled:opacity-60"
           >
             {valueUrl ? "Crop / change photo" : "Choose & crop photo"}
           </button>

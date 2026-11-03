@@ -1,24 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  /* Neutrals: zinc scale. One accent (indigo), used for focus, links and active state only. */
-  --background: #09090b;
-  --surface: #111113;
-  --surface-elevated: #18181b;
+  /* Near-black neutrals with Tix pink + blue as the only colour.
+     Pink is the primary accent (active, focus, prices to watch); blue is secondary
+     (dates, info). The pink→blue gradient is reserved for 2–3 hero moments. */
+  --background: #0d0d0d;
+  --surface: #151515;
+  --surface-elevated: #1c1c1c;
   --foreground: #fafafa;
-  --muted: #a1a1aa;
-  --subtle: #8a8a93;
-  --silver: #d4d4d8;
-  --accent: #818cf8;
-  --accent-strong: #6366f1;
-  --accent-soft: rgba(129, 140, 248, 0.12);
+  --muted: #adadad;
+  --subtle: #8a8a8a;
+  --silver: #d4d4d4;
+  --pink: #ff2ea8;
+  --pink-soft: #ff66c4;
+  --blue: #22d3ff;
+  --blue-soft: #6df0ff;
+  --accent: var(--pink-soft);
+  --accent-strong: var(--pink);
+  --accent-soft: rgba(255, 46, 168, 0.14);
+  --brand-gradient: linear-gradient(100deg, var(--pink) 0%, #c56bff 50%, var(--blue) 100%);
   --success: #34d399;
   --danger: #fb7185;
-  --ring: rgba(129, 140, 248, 0.5);
-  --border: #27272a;
-  --border-strong: #3f3f46;
-  --radius-lg: 0.75rem;
-  --radius-md: 0.5rem;
+  --ring: rgba(255, 46, 168, 0.55);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --radius-lg: 0.875rem;
+  --radius-md: 0.625rem;
   --radius-sm: 0.375rem;
   --space-xs: 0.375rem;
   --space-sm: 0.75rem;
@@ -91,7 +98,7 @@ details > summary::-webkit-details-marker {
 /* Link color/decoration reset comes from Tailwind preflight (layered), so utilities can override it. */
 
 ::selection {
-  background: rgba(129, 140, 248, 0.35);
+  background: rgba(255, 46, 168, 0.4);
   color: #fff;
 }
 
@@ -137,7 +144,61 @@ details > summary::-webkit-details-marker {
 }
 
 .brand-heading {
-  letter-spacing: -0.025em;
+  letter-spacing: -0.045em;
+}
+
+/* One-off brand moments only (hero word, spotlight hairline). */
+.brand-gradient-text {
+  background: var(--brand-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 1px gradient border: element gets the gradient, inner child gets the surface. */
+.gradient-ring {
+  background: var(--brand-gradient);
+  padding: 1px;
+}
+
+/* Scrolling ticker. Content is duplicated once; the track moves by half its width. */
+@keyframes tix-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: tix-marquee 60s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes tix-caret {
+  50% { opacity: 0; }
+}
+
+.type-caret {
+  animation: tix-caret 1s steps(1) infinite;
+}
+
+@keyframes tix-live {
+  0% { box-shadow: 0 0 0 0 rgba(255, 46, 168, 0.55); }
+  100% { box-shadow: 0 0 0 8px rgba(255, 46, 168, 0); }
+}
+
+.live-dot {
+  animation: tix-live 2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .type-caret,
+  .live-dot {
+    animation: none;
+  }
 }
 
 /* Small section label. Plain text, no pill, no glow. */

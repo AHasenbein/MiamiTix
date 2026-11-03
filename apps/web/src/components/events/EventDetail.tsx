@@ -12,7 +12,13 @@ import {
   removeEventFromWishlist
 } from "@/lib/api/auth";
 import type { Listing } from "@/lib/api/listings";
-import { getEvent, updateEvent, uploadEventImage } from "@/lib/api/events";
+import {
+  getEvent,
+  getFeaturedEvent,
+  setFeaturedEvent,
+  updateEvent,
+  uploadEventImage
+} from "@/lib/api/events";
 import { ApiClientError } from "@/lib/api/client";
 import { listListings } from "@/lib/api/listings";
 import { readAuthToken } from "@/lib/auth/token-storage";
@@ -39,6 +45,10 @@ export function EventDetail({ eventId }: EventDetailProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isTopTrustedSeller, setIsTopTrustedSeller] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEventOfMonth, setIsEventOfMonth] = useState(false);
+  const [isUpdatingFeatured, setIsUpdatingFeatured] = useState(false);
+  const [featuredMessage, setFeaturedMessage] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [editVenue, setEditVenue] = useState("");
   const [editCity, setEditCity] = useState("");
@@ -122,6 +132,7 @@ export function EventDetail({ eventId }: EventDetailProps) {
         if (!cancelled) {
           setCurrentUserId(response.user.id);
           setIsTopTrustedSeller(response.user.isTopTrustedSeller);
+          setIsAdmin(response.user.isPrimaryTrustedSeller);
           setIsTrustedSeller(response.user.isTrustedSeller);
           setIsWishlisted(wishlistIds.includes(eventId));
         }
@@ -130,9 +141,21 @@ export function EventDetail({ eventId }: EventDetailProps) {
       }
     }
 
+    async function loadFeatured() {
+      try {
+        const featured = await getFeaturedEvent();
+        if (!cancelled) {
+          setIsEventOfMonth(featured?.id === eventId);
+        }
+      } catch {
+        // Badge is optional.
+      }
+    }
+
     void loadEventDetail();
     void loadListings();
     void loadCurrentUser();
+    void loadFeatured();
 
     return () => {
       cancelled = true;
@@ -254,6 +277,31 @@ export function EventDetail({ eventId }: EventDetailProps) {
     }
   }
 
+  async function handleToggleEventOfMonth() {
+    const token = readAuthToken();
+    if (!token || !event) {
+      return;
+    }
+    const next = !isEventOfMonth;
+    setIsUpdatingFeatured(true);
+    setFeaturedMessage("");
+    try {
+      await setFeaturedEvent(next ? event.id : null, token);
+      setIsEventOfMonth(next);
+      setFeaturedMessage(
+        next
+          ? "This is now the Event of the Month on the homepage. It replaces any previous pick."
+          : "Removed as Event of the Month."
+      );
+    } catch (error) {
+      setFeaturedMessage(
+        error instanceof ApiClientError ? error.message : "Could not update the Event of the Month."
+      );
+    } finally {
+      setIsUpdatingFeatured(false);
+    }
+  }
+
   const eventEnded = hasEventStarted(event.startAt);
   const shouldShowVenue = Boolean(event.venue?.trim()) && event.venue.trim() !== "TBD";
   const shouldShowDescription =
@@ -283,13 +331,18 @@ export function EventDetail({ eventId }: EventDetailProps) {
             )}
           </div>
           <div className="grid min-w-0 flex-1 gap-2">
-            <p className="tabular text-sm text-[var(--accent)]">
+            <p className="tabular text-sm text-[var(--blue-soft)]">
               {formatEventDateTime(event.startAt)}
               {eventEnded ? " (ended)" : ""}
             </p>
             <h1 className="brand-heading text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-4xl">{event.title}</h1>
             {event.artists.length ? (
               <p className="muted-text text-sm">Artists: {event.artists.join(", ")}</p>
+            ) : null}
+            {isEventOfMonth ? (
+              <p className="w-fit rounded-full border border-[var(--pink)] px-2.5 py-0.5 text-xs font-medium text-[var(--pink-soft)]">
+                Event of the Month
+              </p>
             ) : null}
             {event.isHouseMusic ? (
               <p className="text-xs font-medium text-[var(--accent)]">
@@ -325,8 +378,25 @@ export function EventDetail({ eventId }: EventDetailProps) {
           >
             {isWishlisted ? "★ Wishlisted" : "☆ Wishlist"}
           </Button>
+          {isAdmin && !eventEnded ? (
+            <Button
+              variant="secondary"
+              type="button"
+              className={`w-full sm:w-auto ${isEventOfMonth ? "!border-[var(--pink)] !text-[var(--pink-soft)]" : ""}`}
+              disabled={isUpdatingFeatured}
+              aria-pressed={isEventOfMonth}
+              onClick={handleToggleEventOfMonth}
+            >
+              {isUpdatingFeatured
+                ? "Saving..."
+                : isEventOfMonth
+                  ? "✓ Event of the Month"
+                  : "Make Event of the Month"}
+            </Button>
+          ) : null}
         </div>
         {wishlistMessage ? <Alert tone="info">{wishlistMessage}</Alert> : null}
+        {featuredMessage ? <Alert tone="info">{featuredMessage}</Alert> : null}
         {canEditEvent ? (
           <div className="mt-2 grid gap-3">
             <Button

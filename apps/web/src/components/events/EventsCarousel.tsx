@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Event } from "@/lib/api/events";
 import { miamiTimeSuffix } from "@/lib/datetime";
-import { listEvents } from "@/lib/api/events";
+import { formatFromPrice, useUpcomingEvents } from "@/lib/hooks/useUpcomingEvents";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 interface EventsCarouselProps {
   title?: string;
   subtitle?: string;
   limit?: number;
+  /** Auto-scroll interval. Pauses on hover/touch and for reduced-motion users. 0 disables. */
   autoAdvanceMs?: number;
 }
 
@@ -17,51 +18,24 @@ export function EventsCarousel({
   title = "Upcoming events",
   subtitle = "",
   limit = 10,
-  autoAdvanceMs = 9000
+  autoAdvanceMs = 5000
 }: EventsCarouselProps) {
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const { data, error, isLoading } = useUpcomingEvents();
+  const events = data?.events.slice(0, limit) ?? [];
   const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadEvents() {
-      try {
-        const response = await listEvents({ limit });
-        if (!cancelled) {
-          setEvents(response);
-        }
-      } catch {
-        if (!cancelled) {
-          setErrorMessage("Could not load events.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadEvents();
-    return () => {
-      cancelled = true;
-    };
-  }, [limit]);
+  const reduceMotion = usePrefersReducedMotion();
 
   const scrollByCards = useCallback((direction: 1 | -1) => {
     const track = trackRef.current;
     if (!track) return;
     const firstCard = track.querySelector<HTMLElement>("[data-carousel-card]");
-    const cardWidth = firstCard?.offsetWidth ?? 280;
-    const gap = 16;
-    track.scrollBy({ left: direction * (cardWidth + gap), behavior: "smooth" });
+    const cardWidth = firstCard?.offsetWidth ?? 300;
+    track.scrollBy({ left: direction * (cardWidth + 16), behavior: "smooth" });
   }, []);
 
   useEffect(() => {
-    if (isPaused || !events.length || autoAdvanceMs <= 0) {
+    if (isPaused || reduceMotion || !events.length || autoAdvanceMs <= 0) {
       return;
     }
     const interval = window.setInterval(() => {
@@ -75,119 +49,125 @@ export function EventsCarousel({
       }
     }, autoAdvanceMs);
     return () => window.clearInterval(interval);
-  }, [autoAdvanceMs, events.length, isPaused, scrollByCards]);
+  }, [autoAdvanceMs, events.length, isPaused, reduceMotion, scrollByCards]);
 
-  const pauseCarousel = useCallback(() => setIsPaused(true), []);
-  const resumeCarousel = useCallback(() => setIsPaused(false), []);
+  const pause = useCallback(() => setIsPaused(true), []);
+  const resume = useCallback(() => setIsPaused(false), []);
 
   return (
     <section
-      className="grid gap-4"
-      onMouseEnter={pauseCarousel}
-      onMouseLeave={resumeCarousel}
-      onTouchStart={pauseCarousel}
-      onTouchEnd={resumeCarousel}
-      onTouchCancel={resumeCarousel}
+      className="grid gap-5"
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onTouchStart={pause}
+      onTouchEnd={resume}
+      onTouchCancel={resume}
+      onFocus={pause}
+      onBlur={resume}
     >
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="brand-heading text-2xl font-bold text-[var(--foreground)] sm:text-3xl">{title}</h2>
+          <h2 className="brand-heading text-2xl font-bold text-[var(--foreground)] sm:text-4xl">{title}</h2>
           {subtitle ? <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">{subtitle}</p> : null}
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/events"
-            className="mr-2 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-          >
+          <Link href="/events" className="mr-1 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]">
             View all →
           </Link>
-          <button
-            type="button"
-            aria-label="Scroll previous"
-            onClick={() => scrollByCards(-1)}
-            className="hidden h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] text-[var(--silver)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)] hover:text-white sm:inline-flex"
-          >
-            <span aria-hidden="true">←</span>
-          </button>
-          <button
-            type="button"
-            aria-label="Scroll next"
-            onClick={() => scrollByCards(1)}
-            className="hidden h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] text-[var(--silver)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)] hover:text-white sm:inline-flex"
-          >
-            <span aria-hidden="true">→</span>
-          </button>
+          {(["prev", "next"] as const).map((direction) => (
+            <button
+              key={direction}
+              type="button"
+              aria-label={direction === "prev" ? "Scroll previous" : "Scroll next"}
+              onClick={() => scrollByCards(direction === "prev" ? -1 : 1)}
+              className="hidden h-10 w-10 items-center justify-center rounded-full border border-[var(--border-strong)] text-[var(--silver)] transition-colors hover:border-[var(--pink)] hover:text-white sm:inline-flex"
+            >
+              <span aria-hidden="true">{direction === "prev" ? "←" : "→"}</span>
+            </button>
+          ))}
         </div>
       </header>
 
       {isLoading ? (
         <div className="scrollbar-none -mx-[3vw] flex gap-4 overflow-hidden px-[3vw] sm:mx-0 sm:px-0">
           {Array.from({ length: 4 }).map((_unused, index) => (
-            <div
-              key={index}
-              className="h-72 w-[min(280px,85vw)] shrink-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--surface-elevated)]"
-            />
+            <div key={index} className="aspect-[4/3] w-[min(320px,80vw)] shrink-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--surface)]" />
           ))}
         </div>
       ) : null}
 
-      {!isLoading && errorMessage ? (
-        <p className="muted-text text-sm">{errorMessage}</p>
+      {error ? <p className="text-sm text-[var(--muted)]">Could not load events.</p> : null}
+      {!isLoading && !error && !events.length ? (
+        <p className="text-sm text-[var(--muted)]">No upcoming events yet.</p>
       ) : null}
 
-      {!isLoading && !errorMessage && !events.length ? (
-        <p className="muted-text text-sm">No upcoming events yet.</p>
-      ) : null}
-
-      {!isLoading && events.length ? (
+      {events.length ? (
         <div
           ref={trackRef}
-          className="scrollbar-none -mx-[3vw] flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[3vw] pb-2 sm:mx-0 sm:px-0"
+          className="scrollbar-none -mx-[3vw] flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[3vw] pb-1 sm:mx-0 sm:px-0"
         >
           {events.map((event) => {
-            const startDate = new Date(event.startAt);
-            const dateLabel = startDate.toLocaleDateString(undefined, {
-              weekday: "short",
-              month: "short",
-              day: "numeric"
-            });
-            const timeLabel = `${startDate.toLocaleTimeString(undefined, {
-              hour: "numeric",
-              minute: "2-digit"
-            })}${miamiTimeSuffix(event.startAt)}`;
+            const start = new Date(event.startAt);
+            const dateLabel = start.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+            const timeLabel = `${start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}${miamiTimeSuffix(event.startAt)}`;
+            const fromPrice = formatFromPrice(data?.lowestPriceCents[event.id]);
             return (
               <Link
                 key={event.id}
                 data-carousel-card
                 href={`/events/${event.id}`}
-                className="group grid w-[min(260px,78vw)] shrink-0 snap-start gap-3 rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                className="group grid w-[min(320px,80vw)] shrink-0 snap-start gap-3 rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
-                <div className="aspect-square w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-elevated)]">
+                <div className="aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-elevated)]">
                   {event.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       alt={`${event.title} event image`}
                       src={event.imageUrl}
-                      className="h-full w-full object-cover transition-opacity duration-150 group-hover:opacity-90"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     />
                   ) : null}
                 </div>
-                <div className="grid gap-0.5">
-                  <p className="tabular text-xs text-[var(--accent)]">
-                    {dateLabel} · {timeLabel}
-                  </p>
-                  <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--foreground)] group-hover:underline group-hover:decoration-[var(--border-strong)] group-hover:underline-offset-4">
-                    {event.title}
-                  </h3>
-                  <p className="line-clamp-1 text-sm text-[var(--muted)]">
-                    {event.venue && event.venue !== "TBD" ? event.venue : "Venue TBD"}
-                    {event.city ? `, ${event.city}` : ""}
-                  </p>
-                </div>
+                <EventMeta
+                  title={event.title}
+                  when={`${dateLabel} · ${timeLabel}`}
+                  where={event.venue && event.venue !== "TBD" ? event.venue : event.city}
+                  fromPrice={fromPrice}
+                />
               </Link>
             );
           })}
         </div>
       ) : null}
     </section>
+  );
+}
+
+/** CrowdVolt-style caption: title + when/where on the left, "From $X" on the right. */
+export function EventMeta({
+  title,
+  when,
+  where,
+  fromPrice
+}: {
+  title: string;
+  when: string;
+  where: string;
+  fromPrice: string | null;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-3">
+      <div className="min-w-0">
+        <h3 className="line-clamp-1 text-base font-semibold text-[var(--foreground)]">{title}</h3>
+        <p className="tabular mt-0.5 line-clamp-1 text-xs text-[var(--blue-soft)]">{when}</p>
+        <p className="line-clamp-1 text-sm text-[var(--muted)]">{where}</p>
+      </div>
+      {fromPrice ? (
+        <p className="shrink-0 text-right leading-tight">
+          <span className="block text-[11px] text-[var(--subtle)]">From</span>
+          <span className="tabular text-lg font-semibold text-[var(--foreground)]">{fromPrice}</span>
+        </p>
+      ) : null}
+    </div>
   );
 }

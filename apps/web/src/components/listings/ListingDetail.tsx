@@ -437,7 +437,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
                 <select
                   value={editSeatType}
                   onChange={(event) => setEditSeatType(event.target.value as Listing["seatType"])}
-                  className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(129,140,248,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
+                  className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(255,46,168,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
                 >
                   <option value="GA">GA</option>
                   <option value="VIP">VIP</option>

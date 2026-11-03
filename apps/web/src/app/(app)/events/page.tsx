@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { EventsBrowse } from "@/components/events/EventsBrowse";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 
@@ -26,7 +27,10 @@ export default function EventsPage() {
           </ButtonLink>
         </div>
       </div>
-      <EventsBrowse />
+      {/* EventsBrowse reads ?q= via useSearchParams, which needs a Suspense boundary. */}
+      <Suspense fallback={null}>
+        <EventsBrowse />
+      </Suspense>
     </section>
   );
 }

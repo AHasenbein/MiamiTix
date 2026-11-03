@@ -1,16 +1,24 @@
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { addEventToWishlist, getAccountOverview, removeEventFromWishlist } from "@/lib/api/auth";
 import type { Event } from "@/lib/api/events";
 import { listEvents } from "@/lib/api/events";
+import { listListings } from "@/lib/api/listings";
+import { formatFromPrice } from "@/lib/hooks/useUpcomingEvents";
 import { ApiClientError } from "@/lib/api/client";
 import { readAuthToken } from "@/lib/auth/token-storage";
 import { Alert } from "../ui/Alert";
 import { EventCard } from "./EventCard";
 
 export function EventsBrowse() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q")?.trim() ?? "";
   const [events, setEvents] = useState<Event[]>([]);
+  const [lowestPriceCents, setLowestPriceCents] = useState<Record<string, number>>({});
   const [errorMessage, setErrorMessage] = useState("");
   const [wishlistError, setWishlistError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -26,11 +34,21 @@ export function EventsBrowse() {
       try {
         const token = readAuthToken();
         // Wishlist state is optional: an expired session must not hide the events.
-        const [eventsResponse, accountOverview] = await Promise.all([
-          listEvents(),
-          token ? getAccountOverview(token).catch(() => null) : Promise.resolve(null)
+        const [eventsResponse, accountOverview, listings] = await Promise.all([
+          listEvents({ query }),
+          token ? getAccountOverview(token).catch(() => null) : Promise.resolve(null),
+          listListings().catch(() => [])
         ]);
         if (!cancelled) {
+          const lowest: Record<string, number> = {};
+          for (const listing of listings) {
+            if (listing.quantity <= 0) continue;
+            const current = lowest[listing.eventId];
+            if (current === undefined || listing.priceCents < current) {
+              lowest[listing.eventId] = listing.priceCents;
+            }
+          }
+          setLowestPriceCents(lowest);
           setEvents(eventsResponse);
           setWishlistedEventIds(
             accountOverview ? accountOverview.wishlistedEvents.map((event) => event.id) : []
@@ -54,7 +72,12 @@ export function EventsBrowse() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [query]);
+
+  function submitSearch(nextQuery: string) {
+    const trimmed = nextQuery.trim();
+    router.replace(trimmed ? `${pathname}?q=${encodeURIComponent(trimmed)}` : pathname);
+  }
 
   async function handleToggleWishlist(eventId: string) {
     const token = readAuthToken();
@@ -95,7 +118,8 @@ export function EventsBrowse() {
   }
 
   return (
-    <section className="grid gap-4" aria-busy={isLoading}>
+    <section className="grid gap-5" aria-busy={isLoading}>
+      <EventsSearchForm key={query} initialQuery={query} onSearch={submitSearch} />
       {isLoading ? (
         <p className="muted-text text-sm" role="status" aria-live="polite">
           Loading events...
@@ -105,7 +129,7 @@ export function EventsBrowse() {
       {wishlistError ? <Alert tone="info">{wishlistError}</Alert> : null}
       {!isLoading && !errorMessage && !events.length ? (
         <Alert tone="info">
-          No events are currently listed for sale.
+          {query ? `No upcoming events match “${query}”.` : "No events are currently listed for sale."}
         </Alert>
       ) : null}
       {!isLoading && !errorMessage && events.length ? (
@@ -117,10 +141,57 @@ export function EventsBrowse() {
               isWishlisted={wishlistedEventIds.includes(event.id)}
               isWishlistUpdating={wishlistUpdatingIds.includes(event.id)}
               onToggleWishlist={handleToggleWishlist}
+              fromPrice={formatFromPrice(lowestPriceCents[event.id])}
             />
           ))}
         </div>
       ) : null}
     </section>
+  );
+}
+
+function EventsSearchForm({
+  initialQuery,
+  onSearch
+}: {
+  initialQuery: string;
+  onSearch: (query: string) => void;
+}) {
+  const [draftQuery, setDraftQuery] = useState(initialQuery);
+  return (
+    <form
+      role="search"
+      className="flex max-w-xl items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--surface)] py-1 pl-4 pr-1 focus-within:border-[var(--pink)]"
+      onSubmit={(formEvent) => {
+        formEvent.preventDefault();
+        onSearch(draftQuery);
+      }}
+    >
+      <label className="sr-only" htmlFor="events-search">
+        Search events
+      </label>
+      <input
+        id="events-search"
+        value={draftQuery}
+        onChange={(changeEvent) => setDraftQuery(changeEvent.target.value)}
+        placeholder="Search by event, artist, or venue"
+        className="h-10 min-w-0 flex-1 bg-transparent text-[var(--foreground)] outline-none placeholder:text-[var(--subtle)]"
+      />
+      {initialQuery ? (
+        <button
+          type="button"
+          onClick={() => onSearch("")}
+          className="h-10 rounded-full px-3 text-sm text-[var(--muted)] hover:text-white"
+        >
+          Clear
+        </button>
+      ) : null}
+      <button
+        type="submit"
+        className="h-10 rounded-full bg-[var(--foreground)] px-4 text-sm font-semibold text-[var(--background)] hover:bg-zinc-200"
+      >
+        Search
+      </button>
+    </form>
   );
 }
