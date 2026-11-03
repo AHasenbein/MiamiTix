@@ -147,6 +147,71 @@ details > summary::-webkit-details-marker {
   letter-spacing: -0.045em;
 }
 
+/* Wide display face for page titles and home section headings. */
+.display-heading {
+  font-family: var(--font-display), var(--font-inter), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Neon-sign script for one hero phrase. */
+.neon-script {
+  font-family: var(--font-neon), cursive;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #ffd6ee;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 8px var(--pink),
+    0 0 22px var(--pink),
+    0 0 44px rgba(255, 46, 168, 0.55);
+}
+
+/* Neon palm trees growing in from the page edges in the hero. */
+.neon-palm {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.neon-palm-pink {
+  stroke: #ff9ad6;
+  filter: drop-shadow(0 0 2px var(--pink)) drop-shadow(0 0 10px var(--pink))
+    drop-shadow(0 0 24px rgba(255, 46, 168, 0.5));
+}
+
+.neon-palm-blue {
+  stroke: #9ff4ff;
+  filter: drop-shadow(0 0 2px var(--blue)) drop-shadow(0 0 10px var(--blue))
+    drop-shadow(0 0 24px rgba(34, 211, 255, 0.45));
+}
+
+.neon-ground {
+  background: linear-gradient(
+    90deg,
+    var(--pink) 0%,
+    rgba(255, 46, 168, 0) 28%,
+    rgba(34, 211, 255, 0) 72%,
+    var(--blue) 100%
+  );
+  box-shadow: 0 0 18px rgba(255, 46, 168, 0.35);
+}
+
+.neon-flicker {
+  animation: neon-flicker 7s infinite;
+}
+
+@keyframes neon-flicker {
+  0%, 91%, 93.5%, 96%, 100% { opacity: 1; }
+  92% { opacity: 0.45; }
+  95% { opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-flicker {
+    animation: none;
+  }
+}
+
 /* One-off brand moments only (hero word, spotlight hairline). */
 .brand-gradient-text {
   background: var(--brand-gradient);

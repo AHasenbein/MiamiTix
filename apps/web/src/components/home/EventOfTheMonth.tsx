@@ -39,7 +39,7 @@ export function EventOfTheMonth() {
 
   return (
     <section aria-labelledby="eotm-heading" className="grid gap-5">
-      <h2 id="eotm-heading" className="brand-heading text-2xl font-bold text-[var(--foreground)] sm:text-4xl">
+      <h2 id="eotm-heading" className="display-heading text-xl font-extrabold uppercase text-[var(--foreground)] sm:text-3xl">
         Event of the Month
       </h2>
       <article

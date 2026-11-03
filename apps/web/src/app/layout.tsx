@@ -1,10 +1,24 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Unbounded, Yellowtail } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+// Display face for big headings: wide and geometric, nothing like the usual tight grotesk.
+const unbounded = Unbounded({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["600", "800"],
+});
+
+// Neon-sign script, used for a single hero phrase only.
+const yellowtail = Yellowtail({
+  variable: "--font-neon",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -57,7 +71,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${unbounded.variable} ${yellowtail.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
