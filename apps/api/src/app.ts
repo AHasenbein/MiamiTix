@@ -20,6 +20,7 @@ import { ListingService } from "./modules/listings/application/listing-service.j
 import { createListingRoutes } from "./modules/listings/presentation/listing-routes.js";
 import { MongoPurchaseRepository } from "./modules/listings/infrastructure/mongo-purchase-repository.js";
 import { MongoWishlistRepository } from "./modules/events/infrastructure/mongo-wishlist-repository.js";
+import { MongoFeaturedEventRepository } from "./modules/events/infrastructure/mongo-featured-event-repository.js";
 import { MongoPurchaseRequestRepository } from "./modules/listings/infrastructure/mongo-purchase-request-repository.js";
 
 export function createApp() {
@@ -64,6 +65,7 @@ export function createApp() {
     emailSender
   );
   const wishlistRepository = new MongoWishlistRepository();
+  const featuredEventRepository = new MongoFeaturedEventRepository();
 
   app.use(helmet());
   app.use(
@@ -97,7 +99,7 @@ export function createApp() {
       wishlistRepository
     )
   );
-  app.use("/api/v1/events", createEventRoutes(eventService, authService, listingService));
+  app.use("/api/v1/events", createEventRoutes(eventService, authService, listingService, featuredEventRepository));
   app.use("/api/v1/listings", createListingRoutes(listingService, authService, eventService));
 
   app.use((error: unknown, req: Request, res: Response, _next: NextFunction) => {

@@ -4,6 +4,7 @@ import { ZodError, z } from "zod";
 import { HttpError } from "../../../shared/http-error.js";
 import { AuthService } from "../../auth/application/auth-service.js";
 import { EventService } from "../application/event-service.js";
+import type { FeaturedEventRepository } from "../domain/featured-event-repository.js";
 import { ListingService } from "../../listings/application/listing-service.js";
 import { getMongoDb } from "../../../database/mongo.js";
 import { uploadEventImageData } from "../../../shared/cloudinary-uploader.js";
@@ -37,6 +38,10 @@ const updateEventSchema = z
     message: "Provide at least one event field to update."
   });
 
+const setFeaturedEventSchema = z.object({
+  eventId: z.string().min(1).nullable()
+});
+
 const uploadEventImageSchema = z.object({
   imageDataUrl: z.string().min(1).max(2_500_000)
 });
@@ -52,7 +57,8 @@ function extractBearerToken(authorizationHeader?: string): string {
 export function createEventRoutes(
   eventService: EventService,
   authService: AuthService,
-  listingService: ListingService
+  listingService: ListingService,
+  featuredEventRepository: FeaturedEventRepository
 ): Router {
   const router = Router();
 
@@ -88,6 +94,52 @@ export function createEventRoutes(
         ids: activeEventIds
       });
       res.status(200).json({ events });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Event of the Month. Public read; only the primary trusted seller (admin) can change it.
+  // Registered before "/:eventId" so "featured" isn't treated as an id.
+  router.get("/featured", async (_req, res, next) => {
+    try {
+      const selection = await featuredEventRepository.get();
+      if (!selection) {
+        res.status(200).json({ event: null });
+        return;
+      }
+      const event = await eventService.getEventById(selection.eventId).catch((error: unknown) => {
+        if (error instanceof HttpError && error.statusCode === 404) return null;
+        throw error;
+      });
+      // A pick that has been deleted or has already happened stops showing on its own.
+      const isUpcoming = event ? new Date(event.startAt).getTime() > Date.now() : false;
+      res.status(200).json({ event: isUpcoming ? event : null });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.put("/featured", async (req, res, next) => {
+    try {
+      const token = extractBearerToken(req.headers.authorization);
+      const user = await authService.getCurrentUser(token);
+      assertPrimaryTrustedSeller(user.email, "Only the admin account can choose the event of the month.");
+      const input = setFeaturedEventSchema.parse(req.body);
+
+      if (input.eventId === null) {
+        await featuredEventRepository.clear();
+        res.status(200).json({ event: null });
+        return;
+      }
+
+      const event = await eventService.getEventById(input.eventId);
+      await featuredEventRepository.set({
+        eventId: event.id,
+        selectedBy: user.id,
+        selectedAt: new Date()
+      });
+      res.status(200).json({ event });
     } catch (error) {
       next(error);
     }

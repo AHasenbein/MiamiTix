@@ -2,66 +2,40 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Event } from "@/lib/api/events";
 import { miamiTimeSuffix } from "@/lib/datetime";
-import { listEvents } from "@/lib/api/events";
+import { formatFromPrice, useUpcomingEvents } from "@/lib/hooks/useUpcomingEvents";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 interface EventsCarouselProps {
   title?: string;
   subtitle?: string;
   limit?: number;
+  /** Auto-scroll interval. Pauses on hover/touch and for reduced-motion users. 0 disables. */
   autoAdvanceMs?: number;
 }
 
 export function EventsCarousel({
-  title = "Discover events",
-  subtitle = "Hand-picked nights, just-dropped lineups, and trending listings.",
+  title = "Upcoming events",
+  subtitle = "",
   limit = 10,
-  autoAdvanceMs = 9000
+  autoAdvanceMs = 5000
 }: EventsCarouselProps) {
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const { data, error, isLoading } = useUpcomingEvents();
+  const events = data?.events.slice(0, limit) ?? [];
   const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadEvents() {
-      try {
-        const response = await listEvents({ limit });
-        if (!cancelled) {
-          setEvents(response);
-        }
-      } catch {
-        if (!cancelled) {
-          setErrorMessage("Could not load discovery feed.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadEvents();
-    return () => {
-      cancelled = true;
-    };
-  }, [limit]);
+  const reduceMotion = usePrefersReducedMotion();
 
   const scrollByCards = useCallback((direction: 1 | -1) => {
     const track = trackRef.current;
     if (!track) return;
     const firstCard = track.querySelector<HTMLElement>("[data-carousel-card]");
-    const cardWidth = firstCard?.offsetWidth ?? 280;
-    const gap = 16;
-    track.scrollBy({ left: direction * (cardWidth + gap), behavior: "smooth" });
+    const cardWidth = firstCard?.offsetWidth ?? 300;
+    track.scrollBy({ left: direction * (cardWidth + 16), behavior: "smooth" });
   }, []);
 
   useEffect(() => {
-    if (isPaused || !events.length || autoAdvanceMs <= 0) {
+    if (isPaused || reduceMotion || !events.length || autoAdvanceMs <= 0) {
       return;
     }
     const interval = window.setInterval(() => {
@@ -75,129 +49,140 @@ export function EventsCarousel({
       }
     }, autoAdvanceMs);
     return () => window.clearInterval(interval);
-  }, [autoAdvanceMs, events.length, isPaused, scrollByCards]);
+  }, [autoAdvanceMs, events.length, isPaused, reduceMotion, scrollByCards]);
 
-  const pauseCarousel = useCallback(() => setIsPaused(true), []);
-  const resumeCarousel = useCallback(() => setIsPaused(false), []);
+  const pause = useCallback(() => setIsPaused(true), []);
+  const resume = useCallback(() => setIsPaused(false), []);
 
   return (
     <section
-      className="grid gap-4"
-      onMouseEnter={pauseCarousel}
-      onMouseLeave={resumeCarousel}
-      onTouchStart={pauseCarousel}
-      onTouchEnd={resumeCarousel}
-      onTouchCancel={resumeCarousel}
+      className="grid gap-5"
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onTouchStart={pause}
+      onTouchEnd={resume}
+      onTouchCancel={resume}
+      onFocus={pause}
+      onBlur={resume}
     >
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <span className="brand-pill">
-            <span className="dot" />
-            Featured tonight
-          </span>
-          <h2 className="brand-heading mt-3 text-2xl font-semibold sm:text-4xl">{title}</h2>
-          <p className="muted-text mt-1 max-w-xl text-sm">{subtitle}</p>
+          <h2 className="brand-heading text-2xl font-bold text-[var(--foreground)] sm:text-4xl">{title}</h2>
+          {subtitle ? <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">{subtitle}</p> : null}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="Scroll previous"
-            onClick={() => scrollByCards(-1)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(232,235,243,0.06)] text-lg text-[var(--silver)] transition active:scale-95 hover:border-[rgba(34,211,255,0.55)] hover:bg-[rgba(34,211,255,0.1)] hover:text-white hover:shadow-[0_0_18px_rgba(34,211,255,0.45)]"
-          >
-            <span aria-hidden="true">‹</span>
-          </button>
-          <button
-            type="button"
-            aria-label="Scroll next"
-            onClick={() => scrollByCards(1)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(232,235,243,0.06)] text-lg text-[var(--silver)] transition active:scale-95 hover:border-[rgba(255,46,168,0.55)] hover:bg-[rgba(255,46,168,0.1)] hover:text-white hover:shadow-[0_0_18px_rgba(255,46,168,0.45)]"
-          >
-            <span aria-hidden="true">›</span>
-          </button>
+          <Link href="/events" className="mr-1 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]">
+            View all →
+          </Link>
+          {(["prev", "next"] as const).map((direction) => (
+            <button
+              key={direction}
+              type="button"
+              aria-label={direction === "prev" ? "Scroll previous" : "Scroll next"}
+              onClick={() => scrollByCards(direction === "prev" ? -1 : 1)}
+              className="hidden h-10 w-10 items-center justify-center rounded-full border border-[var(--border-strong)] text-[var(--silver)] transition-colors hover:border-[var(--pink)] hover:text-white sm:inline-flex"
+            >
+              <span aria-hidden="true">{direction === "prev" ? "←" : "→"}</span>
+            </button>
+          ))}
         </div>
       </header>
 
       {isLoading ? (
         <div className="scrollbar-none -mx-[3vw] flex gap-4 overflow-hidden px-[3vw] sm:mx-0 sm:px-0">
           {Array.from({ length: 4 }).map((_unused, index) => (
-            <div
-              key={index}
-              className="h-72 w-[min(280px,85vw)] shrink-0 animate-pulse rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(232,235,243,0.06)]"
-            />
+            <div key={index} className="aspect-[4/3] w-[min(320px,80vw)] shrink-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--surface)]" />
           ))}
         </div>
       ) : null}
 
-      {!isLoading && errorMessage ? (
-        <p className="muted-text text-sm">{errorMessage}</p>
+      {error ? <p className="text-sm text-[var(--muted)]">Could not load events.</p> : null}
+      {!isLoading && !error && !events.length ? (
+        <p className="text-sm text-[var(--muted)]">No upcoming events yet.</p>
       ) : null}
 
-      {!isLoading && !errorMessage && !events.length ? (
-        <p className="muted-text text-sm">No events to feature yet — be the first to add one.</p>
-      ) : null}
-
-      {!isLoading && events.length ? (
+      {events.length ? (
         <div
           ref={trackRef}
-          className="scrollbar-none -mx-[3vw] flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[3vw] pb-2 sm:mx-0 sm:px-0"
+          className="scrollbar-none -mx-[3vw] flex snap-x snap-mandatory scroll-px-[3vw] gap-4 overflow-x-auto scroll-smooth px-[3vw] pb-1 sm:mx-0 sm:scroll-px-0 sm:px-0"
         >
           {events.map((event) => {
-            const startDate = new Date(event.startAt);
-            const dateLabel = startDate.toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric"
-            });
-            const timeLabel = `${startDate.toLocaleTimeString(undefined, {
-              hour: "numeric",
-              minute: "2-digit"
-            })}${miamiTimeSuffix(event.startAt)}`;
+            const fromPrice = formatFromPrice(data?.lowestPriceCents[event.id]);
             return (
               <Link
                 key={event.id}
                 data-carousel-card
                 href={`/events/${event.id}`}
-                className="group relative w-[min(280px,85vw)] shrink-0 snap-start overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[linear-gradient(160deg,rgba(24,18,48,0.85),rgba(14,10,28,0.95))] transition active:scale-[0.99] hover:-translate-y-0.5 hover:border-[rgba(255,46,168,0.55)] hover:shadow-[0_18px_46px_rgba(255,46,168,0.28),0_0_0_1px_rgba(34,211,255,0.25)]"
+                className="group grid w-[min(320px,80vw)] shrink-0 snap-start gap-3 rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
-                <div className="relative aspect-[5/4] w-full overflow-hidden">
+                <div className="aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-elevated)]">
                   {event.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       alt={`${event.title} event image`}
                       src={event.imageUrl}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     />
-                  ) : (
-                    <div className="h-full w-full bg-[linear-gradient(135deg,rgba(255,46,168,0.3),rgba(34,211,255,0.25))]" />
-                  )}
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,6,15,0)_45%,rgba(7,6,15,0.85)_100%)]" />
-                  <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[rgba(7,6,15,0.6)] px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[var(--silver)] backdrop-blur">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon-pink)] shadow-[0_0_8px_rgba(255,46,168,0.9)]" />
-                    {event.city}
-                  </div>
-                  <div className="absolute bottom-3 left-3 right-3 grid gap-1">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--neon-blue-soft)]">
-                      {dateLabel} · {timeLabel}
-                    </p>
-                    <h3 className="brand-heading line-clamp-2 text-lg font-semibold leading-tight text-white">
-                      {event.title}
-                    </h3>
-                  </div>
-                </div>
-                <div className="grid gap-1 px-4 py-3">
-                  {event.artists.length ? (
-                    <p className="line-clamp-1 text-xs text-[var(--silver)]">
-                      {event.artists.join(", ")}
-                    </p>
                   ) : null}
-                  <p className="muted-text line-clamp-1 text-xs">
-                    {event.venue && event.venue !== "TBD" ? event.venue : "Venue TBD"}
-                  </p>
                 </div>
+                <EventMeta
+                  title={event.title}
+                  startAt={event.startAt}
+                  where={event.venue && event.venue !== "TBD" ? event.venue : event.city}
+                  fromPrice={fromPrice}
+                />
               </Link>
             );
           })}
         </div>
       ) : null}
     </section>
+  );
+}
+
+/** Card caption: calendar date tile, then title, time/venue and starting price. */
+export function EventMeta({
+  title,
+  startAt,
+  where,
+  fromPrice
+}: {
+  title: string;
+  startAt: string;
+  where: string;
+  fromPrice: string | null;
+}) {
+  const start = new Date(startAt);
+  const time = `${start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}${miamiTimeSuffix(startAt)}`;
+  return (
+    <div className="flex gap-3">
+      <div
+        className="tabular grid h-12 w-11 shrink-0 place-content-center rounded-[var(--radius-md)] border border-[var(--border-strong)] text-center leading-none"
+        aria-hidden="true"
+      >
+        <span className="text-[10px] text-[var(--pink-soft)]">
+          {start.toLocaleDateString(undefined, { month: "short" })}
+        </span>
+        <span className="mt-1 text-lg font-semibold text-[var(--foreground)]">{start.getDate()}</span>
+      </div>
+      <div className="min-w-0">
+        <h3 className="line-clamp-1 text-base font-semibold text-[var(--foreground)]">{title}</h3>
+        <p className="line-clamp-1 text-sm text-[var(--muted)]">
+          <span className="tabular text-xs text-[var(--blue-soft)]">
+            {start.toLocaleDateString(undefined, { weekday: "short" })} {time}
+          </span>{" "}
+          · {where}
+        </p>
+        <p className="mt-0.5 text-sm text-[var(--muted)]">
+          {fromPrice ? (
+            <>
+              from <span className="tabular font-semibold text-[var(--foreground)]">{fromPrice}</span>
+            </>
+          ) : (
+            <span className="text-[var(--subtle)]">No listings yet</span>
+          )}
+        </p>
+      </div>
+    </div>
   );
 }

@@ -54,9 +54,12 @@ export function assertTrustedSeller(email: string): void {
   }
 }
 
-export function assertPrimaryTrustedSeller(email: string): void {
+export function assertPrimaryTrustedSeller(
+  email: string,
+  message = "Only the primary trusted seller can delete all events."
+): void {
   if (!isPrimaryTrustedSeller(email)) {
-    throw new HttpError(403, "Only the primary trusted seller can delete all events.");
+    throw new HttpError(403, message);
   }
 }
 

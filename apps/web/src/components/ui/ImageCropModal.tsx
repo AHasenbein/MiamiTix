@@ -130,7 +130,7 @@ export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProp
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-end justify-center bg-[rgba(7,6,15,0.82)] p-0 backdrop-blur-md sm:items-center sm:p-6"
+      className="fixed inset-0 z-[300] flex items-end justify-center bg-[rgba(9,9,11,0.82)] p-0 backdrop-blur-md sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="image-crop-title"
@@ -138,7 +138,7 @@ export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProp
       <div className="flex max-h-[100dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.25rem] border border-[var(--border)] bg-[rgba(12,10,22,0.98)] shadow-[0_-20px_60px_rgba(0,0,0,0.45)] sm:max-h-[90dvh] sm:rounded-[1.25rem]">
         <header className="flex items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3.5 sm:px-5">
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--neon-pink-soft)]">
+            <p className="text-[11px] font-medium text-[var(--accent)]">
               Crop photo
             </p>
             <h2 id="image-crop-title" className="brand-heading mt-1 text-xl font-semibold">
@@ -201,7 +201,7 @@ export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProp
 
           <label className="grid gap-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="muted-text uppercase tracking-[0.14em]">Zoom</span>
+              <span className="muted-text font-medium">Zoom</span>
               <span className="text-[var(--silver)]">{Math.round(zoom * 100)}%</span>
             </div>
             <input
@@ -211,7 +211,7 @@ export function ImageCropModal({ file, onCancel, onConfirm }: ImageCropModalProp
               step={0.01}
               value={zoom}
               onChange={(event) => setZoom(Number(event.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[rgba(232,235,243,0.16)] accent-[var(--neon-pink)]"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[rgba(250,250,250,0.16)] accent-[var(--accent)]"
             />
           </label>
 

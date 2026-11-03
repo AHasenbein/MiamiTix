@@ -84,56 +84,51 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
   function renderDesktopNavLink(item: NavItem) {
     const active = isActive(item.href);
     return (
-      <ButtonLink
+      <Link
         key={item.href}
         href={item.href}
-        variant={active ? "secondary" : "ghost"}
-        className={`h-9 px-4 ${
+        className={`rounded-[var(--radius-md)] px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
           active
-            ? ""
-            : "hover:!border-[rgba(255,46,168,0.55)] hover:!bg-[rgba(255,46,168,0.12)] hover:text-white hover:shadow-[0_0_18px_rgba(255,46,168,0.4)]"
+            ? "text-[var(--foreground)]"
+            : "text-[var(--muted)] hover:text-[var(--foreground)]"
         }`}
         aria-current={active ? "page" : undefined}
       >
         {item.label}
-      </ButtonLink>
+      </Link>
     );
   }
 
   return (
     <>
       {/* Desktop — original header (pre-mobile) */}
-      <header className="sticky top-0 z-30 hidden border-b border-[var(--border)] bg-[rgba(7,6,15,0.78)] backdrop-blur-xl md:block">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,46,168,0.55),rgba(34,211,255,0.55),transparent)]" />
+      <header className="sticky top-0 z-30 hidden border-b border-[var(--border)] bg-[var(--background)]/90 backdrop-blur md:block">
         <div className="page-shell flex h-16 items-center justify-between">
           <Link
             href="/"
-            className="brand-heading group flex items-center gap-2 text-base font-semibold tracking-tight"
+            className="flex items-center gap-2 text-base font-bold tracking-tight text-[var(--foreground)]"
           >
-            <span className="relative inline-flex h-7 w-7 items-center justify-center rounded-md bg-[linear-gradient(135deg,var(--neon-pink),var(--neon-blue))] shadow-[0_0_14px_rgba(255,46,168,0.5)]">
-              <span className="absolute inset-0.5 rounded-[5px] bg-[rgba(7,6,15,0.85)]" />
-              <span className="relative text-[10px] font-bold tracking-[0.05em] text-white">TX</span>
-            </span>
-            <span className="brand-gradient-text">Tix</span>
+            <LogoBadge />
+            <span>Tix</span>
           </Link>
 
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1">
             {isAuthenticated ? (
               <>
                 {authedPrimaryItems.map((item) => renderDesktopNavLink(item))}
                 {authedSecondaryItems.map((item) => renderDesktopNavLink(item))}
-                <Button variant="secondary" className="h-9 px-4" onClick={handleLogout}>
+                <Button variant="ghost" className="ml-1 h-9 px-3" onClick={handleLogout}>
                   Log out
                 </Button>
               </>
             ) : (
               <>
                 {!isAuthRoute ? (
-                  <ButtonLink href="/auth/login" variant="ghost" className="h-9 px-4">
+                  <ButtonLink href="/auth/login" variant="ghost" className="h-9 px-3">
                     Log in
                   </ButtonLink>
                 ) : null}
-                <ButtonLink href="/auth/register" className="h-9 px-4">
+                <ButtonLink href="/auth/register" className="ml-1 h-9 px-3.5">
                   Create account
                 </ButtonLink>
               </>
@@ -143,30 +138,25 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
       </header>
 
       {/* Mobile — button header + bottom nav companion */}
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[rgba(7,6,15,0.88)] pt-[env(safe-area-inset-top)] backdrop-blur-xl md:hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-[env(safe-area-inset-top)] h-px bg-[linear-gradient(90deg,transparent,rgba(255,46,168,0.55),rgba(34,211,255,0.55),transparent)]" />
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--background)]/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
         <div className="mx-auto flex w-[min(1180px,94vw)] items-center justify-between gap-2 px-[3vw] pb-1.5 pt-5">
           <div className="flex min-w-0 items-center gap-1">
             {!isHome ? (
               <Link
                 href="/"
-                className="inline-flex h-11 shrink-0 items-center gap-1 rounded-[var(--radius-md)] px-2 text-sm font-semibold text-[var(--silver)] transition active:scale-95 hover:text-white"
+                className="inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-base font-medium text-[var(--muted)] transition-colors hover:text-white"
                 aria-label="Back to homepage"
               >
                 <span aria-hidden="true">←</span>
-                <span>Home</span>
               </Link>
             ) : null}
             {!isEvents ? (
               <Link
                 href="/"
-                className="brand-heading group flex min-h-11 shrink-0 items-center gap-2 text-base font-semibold tracking-tight"
+                className="flex min-h-11 shrink-0 items-center gap-2 text-base font-bold tracking-tight text-[var(--foreground)]"
               >
-                <span className="relative inline-flex h-7 w-7 items-center justify-center rounded-md bg-[linear-gradient(135deg,var(--neon-pink),var(--neon-blue))] shadow-[0_0_14px_rgba(255,46,168,0.5)]">
-                  <span className="absolute inset-0.5 rounded-[5px] bg-[rgba(7,6,15,0.85)]" />
-                  <span className="relative text-[10px] font-bold tracking-[0.05em] text-white">TX</span>
-                </span>
-                <span className="brand-gradient-text">Tix</span>
+                <LogoBadge />
+                <span>Tix</span>
               </Link>
             ) : null}
           </div>
@@ -177,7 +167,7 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                 <ButtonLink
                   href="/events"
                   variant={isEvents ? "secondary" : "ghost"}
-                  className="px-3 text-xs"
+                  className="h-9 !min-h-9 !px-3 text-xs"
                   aria-current={isEvents ? "page" : undefined}
                 >
                   Events
@@ -185,7 +175,7 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                 <ButtonLink
                   href="/account"
                   variant={isAccount ? "secondary" : "ghost"}
-                  className="px-3 text-xs"
+                  className="h-9 !min-h-9 !px-3 text-xs"
                   aria-current={isAccount ? "page" : undefined}
                 >
                   Account
@@ -197,16 +187,16 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                   <ButtonLink
                     href="/events"
                     variant={isEvents ? "secondary" : "ghost"}
-                    className="px-3 text-xs"
+                    className="h-9 !min-h-9 !px-3 text-xs"
                     aria-current={isEvents ? "page" : undefined}
                   >
                     Events
                   </ButtonLink>
                 ) : null}
-                <ButtonLink href="/auth/login" variant="ghost" className="px-3 text-xs">
+                <ButtonLink href="/auth/login" variant="ghost" className="h-9 !min-h-9 !px-3 text-xs">
                   Log in
                 </ButtonLink>
-                <ButtonLink href="/auth/register" className="px-3 text-xs">
+                <ButtonLink href="/auth/register" className="h-9 !min-h-9 !px-3 text-xs">
                   Sign up
                 </ButtonLink>
               </>
@@ -215,5 +205,16 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
         </div>
       </header>
     </>
+  );
+}
+
+function LogoBadge() {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-flex h-6 w-6 items-center justify-center rounded-[5px] bg-[var(--foreground)] text-[11px] font-extrabold tracking-tight text-[var(--background)]"
+    >
+      tx
+    </span>
   );
 }

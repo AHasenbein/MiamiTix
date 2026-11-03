@@ -350,8 +350,11 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
         Event time: {formatEventDateTime(listing.eventStartAt)}
         {eventEnded ? " (ended)" : ""}
       </p>
-      <p className="text-sm text-white/90">
-        ${(listing.priceCents / 100).toFixed(2)} per ticket (reference price)
+      <p className="flex items-baseline gap-2">
+        <span className="tabular text-2xl font-semibold text-[var(--foreground)]">
+          ${(listing.priceCents / 100).toFixed(2)}
+        </span>
+        <span className="text-sm text-[var(--muted)]">per ticket · reference price</span>
       </p>
       <p className="muted-text text-sm">Seat type: {listing.seatType}</p>
       <p className="muted-text text-sm">
@@ -434,7 +437,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
                 <select
                   value={editSeatType}
                   onChange={(event) => setEditSeatType(event.target.value as Listing["seatType"])}
-                  className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(62,164,255,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
+                  className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(255,46,168,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
                 >
                   <option value="GA">GA</option>
                   <option value="VIP">VIP</option>
