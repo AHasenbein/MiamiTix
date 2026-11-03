@@ -104,12 +104,9 @@ export function EventsCarousel({
       {events.length ? (
         <div
           ref={trackRef}
-          className="scrollbar-none -mx-[3vw] flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[3vw] pb-1 sm:mx-0 sm:px-0"
+          className="scrollbar-none -mx-[3vw] flex snap-x snap-mandatory scroll-px-[3vw] gap-4 overflow-x-auto scroll-smooth px-[3vw] pb-1 sm:mx-0 sm:scroll-px-0 sm:px-0"
         >
           {events.map((event) => {
-            const start = new Date(event.startAt);
-            const dateLabel = start.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-            const timeLabel = `${start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}${miamiTimeSuffix(event.startAt)}`;
             const fromPrice = formatFromPrice(data?.lowestPriceCents[event.id]);
             return (
               <Link
@@ -130,7 +127,7 @@ export function EventsCarousel({
                 </div>
                 <EventMeta
                   title={event.title}
-                  when={`${dateLabel} · ${timeLabel}`}
+                  startAt={event.startAt}
                   where={event.venue && event.venue !== "TBD" ? event.venue : event.city}
                   fromPrice={fromPrice}
                 />
@@ -143,31 +140,49 @@ export function EventsCarousel({
   );
 }
 
-/** CrowdVolt-style caption: title + when/where on the left, "From $X" on the right. */
+/** Card caption: calendar date tile, then title, time/venue and starting price. */
 export function EventMeta({
   title,
-  when,
+  startAt,
   where,
   fromPrice
 }: {
   title: string;
-  when: string;
+  startAt: string;
   where: string;
   fromPrice: string | null;
 }) {
+  const start = new Date(startAt);
+  const time = `${start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}${miamiTimeSuffix(startAt)}`;
   return (
-    <div className="flex items-end justify-between gap-3">
+    <div className="flex gap-3">
+      <div
+        className="tabular grid h-12 w-11 shrink-0 place-content-center rounded-[var(--radius-md)] border border-[var(--border-strong)] text-center leading-none"
+        aria-hidden="true"
+      >
+        <span className="text-[10px] text-[var(--pink-soft)]">
+          {start.toLocaleDateString(undefined, { month: "short" })}
+        </span>
+        <span className="mt-1 text-lg font-semibold text-[var(--foreground)]">{start.getDate()}</span>
+      </div>
       <div className="min-w-0">
         <h3 className="line-clamp-1 text-base font-semibold text-[var(--foreground)]">{title}</h3>
-        <p className="tabular mt-0.5 line-clamp-1 text-xs text-[var(--blue-soft)]">{when}</p>
-        <p className="line-clamp-1 text-sm text-[var(--muted)]">{where}</p>
-      </div>
-      {fromPrice ? (
-        <p className="shrink-0 text-right leading-tight">
-          <span className="block text-[11px] text-[var(--subtle)]">From</span>
-          <span className="tabular text-lg font-semibold text-[var(--foreground)]">{fromPrice}</span>
+        <p className="line-clamp-1 text-sm text-[var(--muted)]">
+          <span className="tabular text-xs text-[var(--blue-soft)]">
+            {start.toLocaleDateString(undefined, { weekday: "short" })} {time}
+          </span>{" "}
+          · {where}
         </p>
-      ) : null}
+        <p className="mt-0.5 text-sm text-[var(--muted)]">
+          {fromPrice ? (
+            <>
+              from <span className="tabular font-semibold text-[var(--foreground)]">{fromPrice}</span>
+            </>
+          ) : (
+            <span className="text-[var(--subtle)]">No listings yet</span>
+          )}
+        </p>
+      </div>
     </div>
   );
 }

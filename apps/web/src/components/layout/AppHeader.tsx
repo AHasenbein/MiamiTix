@@ -167,7 +167,7 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                 <ButtonLink
                   href="/events"
                   variant={isEvents ? "secondary" : "ghost"}
-                  className="px-3 text-xs"
+                  className="h-9 !min-h-9 !px-3 text-xs"
                   aria-current={isEvents ? "page" : undefined}
                 >
                   Events
@@ -175,7 +175,7 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                 <ButtonLink
                   href="/account"
                   variant={isAccount ? "secondary" : "ghost"}
-                  className="px-3 text-xs"
+                  className="h-9 !min-h-9 !px-3 text-xs"
                   aria-current={isAccount ? "page" : undefined}
                 >
                   Account
@@ -187,16 +187,16 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                   <ButtonLink
                     href="/events"
                     variant={isEvents ? "secondary" : "ghost"}
-                    className="px-3 text-xs"
+                    className="h-9 !min-h-9 !px-3 text-xs"
                     aria-current={isEvents ? "page" : undefined}
                   >
                     Events
                   </ButtonLink>
                 ) : null}
-                <ButtonLink href="/auth/login" variant="ghost" className="px-3 text-xs">
+                <ButtonLink href="/auth/login" variant="ghost" className="h-9 !min-h-9 !px-3 text-xs">
                   Log in
                 </ButtonLink>
-                <ButtonLink href="/auth/register" className="px-3 text-xs">
+                <ButtonLink href="/auth/register" className="h-9 !min-h-9 !px-3 text-xs">
                   Sign up
                 </ButtonLink>
               </>

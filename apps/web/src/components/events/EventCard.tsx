@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { Event } from "@/lib/api/events";
-import { miamiTimeSuffix } from "@/lib/datetime";
 import { EventMeta } from "./EventsCarousel";
 
 interface EventCardProps {
@@ -21,16 +20,6 @@ export function EventCard({
   onToggleWishlist,
   fromPrice = null
 }: EventCardProps) {
-  const startDate = new Date(event.startAt);
-  const dateLabel = startDate.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric"
-  });
-  const timeLabel = `${startDate.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit"
-  })}${miamiTimeSuffix(event.startAt)}`;
   const shouldShowVenue = Boolean(event.venue?.trim()) && event.venue.trim() !== "TBD";
 
   return (
@@ -70,7 +59,7 @@ export function EventCard({
         </div>
         <EventMeta
           title={event.title}
-          when={`${dateLabel} · ${timeLabel}`}
+          startAt={event.startAt}
           where={shouldShowVenue ? event.venue : event.city}
           fromPrice={fromPrice}
         />

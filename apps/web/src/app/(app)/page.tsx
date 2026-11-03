@@ -1,10 +1,10 @@
+import Link from "next/link";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EventsCarousel } from "@/components/events/EventsCarousel";
 import { EventOfTheMonth } from "@/components/home/EventOfTheMonth";
 import { EventTicker } from "@/components/home/EventTicker";
-import { HeroHeadline } from "@/components/home/HeroHeadline";
-import { HeroSearch } from "@/components/home/HeroSearch";
-import { NextEventSpotlight } from "@/components/home/NextEventSpotlight";
+import { SearchAutocomplete } from "@/components/search/SearchAutocomplete";
+import { NextEventTicket } from "@/components/home/NextEventTicket";
 
 const steps = [
   {
@@ -36,26 +36,33 @@ export default function Home() {
       <EventTicker />
 
       <div className="page-shell flex flex-1 flex-col gap-16 py-12 sm:gap-24 sm:py-20">
-        <section className="grid justify-items-center gap-8 text-center">
-          <HeroHeadline />
-          <p className="max-w-xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
-            Fan-to-fan tickets for Miami club nights, festivals, and concerts. Buyers and sellers
-            deal directly, and nobody pays a platform fee.
-          </p>
-          <HeroSearch />
-          <div className="flex flex-wrap justify-center gap-2">
-            <ButtonLink href="/events" variant="secondary" className="h-9 px-4 text-[13px]">
-              All events
-            </ButtonLink>
-            <ButtonLink href="/listings/new" variant="secondary" className="h-9 px-4 text-[13px]">
-              Sell tickets
-            </ButtonLink>
+        <section className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">
+          <div className="grid gap-7">
+            <h1 className="brand-heading text-[2.6rem] font-extrabold leading-[0.98] text-[var(--foreground)] sm:text-7xl">
+              Miami tickets,
+              <br />
+              fan to fan.
+              <br />
+              <span className="brand-gradient-text">Zero fees.</span>
+            </h1>
+            <p className="max-w-lg text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+              Buy and resell tickets for club nights, festivals, and concerts. You deal with
+              the seller directly, and Tix never takes a cut.
+            </p>
+            <SearchAutocomplete size="lg" className="max-w-lg" />
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              <Link href="/events" className="text-[var(--silver)] underline decoration-[var(--border-strong)] underline-offset-4 hover:text-white">
+                Browse all events
+              </Link>
+              <Link href="/listings/new" className="text-[var(--silver)] underline decoration-[var(--border-strong)] underline-offset-4 hover:text-white">
+                Sell your tickets
+              </Link>
+            </div>
           </div>
+          <NextEventTicket />
         </section>
 
-        <NextEventSpotlight />
-
-        <EventsCarousel title="This week in Miami" />
+        <EventsCarousel title="Coming up in Miami" />
 
         <EventOfTheMonth />
 

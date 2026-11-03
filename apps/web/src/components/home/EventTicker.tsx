@@ -21,14 +21,10 @@ export function EventTicker() {
             href={`/events/${event.id}`}
             aria-hidden={index >= events.length ? true : undefined}
             tabIndex={index >= events.length ? -1 : undefined}
-            className="flex items-center gap-2 whitespace-nowrap px-5 py-2.5 text-[13px] text-[var(--muted)] transition-colors hover:text-white"
+            className="flex items-baseline gap-2 whitespace-nowrap px-6 py-2.5 text-[13px] text-[var(--muted)] transition-colors hover:text-white"
           >
-            <span
-              aria-hidden="true"
-              className={`h-1.5 w-1.5 rounded-full ${index % 2 ? "bg-[var(--blue)]" : "bg-[var(--pink)]"}`}
-            />
             <span className="font-medium text-[var(--foreground)]">{event.title}</span>
-            <span className="tabular text-xs">
+            <span className="tabular text-xs text-[var(--blue-soft)]">
               {new Date(event.startAt).toLocaleDateString(undefined, {
                 weekday: "short",
                 month: "short",

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import type { Event } from "@/lib/api/events";
 import { getFeaturedEvent } from "@/lib/api/events";
@@ -37,40 +38,53 @@ export function EventOfTheMonth() {
     Boolean(description) && description !== "User-submitted event pending schedule confirmation.";
 
   return (
-    <section aria-labelledby="eotm-heading" className="relative isolate overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)]">
-      {event.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={event.imageUrl} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
-      ) : null}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(13,13,13,0.96)_0%,rgba(13,13,13,0.85)_45%,rgba(13,13,13,0.35)_100%)]" />
-      <div className="grid gap-8 p-6 sm:p-12 md:max-w-2xl">
-        <div>
-          <p className="text-sm font-medium text-[var(--accent)]">{month} pick</p>
-          <h2 id="eotm-heading" className="brand-heading mt-2 text-5xl font-extrabold uppercase leading-[0.9] text-[var(--foreground)] sm:text-7xl">
-            Event of
-            <br />
-            the <span className="brand-gradient-text">month</span>
-          </h2>
-        </div>
-        <div className="grid gap-2">
-          <h3 className="text-2xl font-semibold text-[var(--foreground)] sm:text-3xl">{event.title}</h3>
-          <p className="text-sm text-[var(--silver)] sm:text-base">
+    <section aria-labelledby="eotm-heading" className="grid gap-5">
+      <h2 id="eotm-heading" className="brand-heading text-2xl font-bold text-[var(--foreground)] sm:text-4xl">
+        Event of the Month
+      </h2>
+      <article
+        className="ticket ticket-x grid overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-elevated)] md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)_12rem]"
+        style={{ "--notch-y": "calc(100% - 8rem)", "--notch-x": "calc(100% - 12rem)" } as CSSProperties}
+      >
+        <Link href={`/events/${event.id}`} tabIndex={-1} className="block aspect-[16/10] bg-[var(--surface)] md:aspect-auto md:min-h-80">
+          {event.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={event.imageUrl} alt={`${event.title} event image`} className="h-full w-full object-cover" />
+          ) : null}
+        </Link>
+
+        <div className="grid content-center gap-3 p-6 sm:p-8">
+          <p className="text-sm font-medium text-[var(--pink-soft)]">{month}&apos;s pick</p>
+          <h3 className="brand-heading text-3xl font-bold leading-tight text-[var(--foreground)] sm:text-4xl">
+            <Link href={`/events/${event.id}`} className="hover:underline hover:decoration-[var(--border-strong)] hover:underline-offset-4">
+              {event.title}
+            </Link>
+          </h3>
+          <p className="text-sm text-[var(--muted)] sm:text-base">
             <span className="tabular text-[var(--blue-soft)]">{dateLabel} · {timeLabel}</span>
-            {venue ? <> · {venue}, {event.city}</> : <> · {event.city}</>}
+            <br />
+            {venue ? `${venue}, ${event.city}` : event.city}
           </p>
           {showDescription ? (
             <p className="line-clamp-3 max-w-lg text-sm leading-6 text-[var(--muted)]">{description}</p>
           ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+
+        <div className="perforation mx-6 flex h-32 items-center justify-between gap-4 border-t-2 md:mx-0 md:my-6 md:h-auto md:flex-col md:justify-center md:border-l-2 md:border-t-0 md:px-5 md:text-center">
+          <div>
+            <p className="tabular text-xs text-[var(--subtle)]">{start.toLocaleDateString(undefined, { month: "short" })}</p>
+            <p className="tabular text-4xl font-semibold leading-none text-[var(--foreground)]">
+              {String(start.getDate()).padStart(2, "0")}
+            </p>
+          </div>
           <Link
             href={`/events/${event.id}`}
-            className="inline-flex h-11 items-center rounded-full bg-[var(--foreground)] px-6 text-sm font-semibold text-[var(--background)] transition-colors hover:bg-zinc-200"
+            className="inline-flex h-10 items-center whitespace-nowrap rounded-full bg-[var(--foreground)] px-5 text-sm font-semibold text-[var(--background)] transition-colors hover:bg-zinc-200"
           >
-            {fromPrice ? `Tickets from ${fromPrice}` : "View event"}
+            {fromPrice ? `From ${fromPrice}` : "View event"}
           </Link>
         </div>
-      </div>
+      </article>
     </section>
   );
 }

@@ -162,6 +162,40 @@ details > summary::-webkit-details-marker {
   padding: 1px;
 }
 
+/* Ticket stub: two half-circle notches cut where the stub tears off.
+   .ticket notches the left/right edges at --notch-y (stacked layout);
+   .ticket-x notches the top/bottom edges at --notch-x (side-by-side layout). */
+.ticket {
+  --notch: 11px;
+  -webkit-mask:
+    radial-gradient(circle var(--notch) at 0 var(--notch-y, 70%), #0000 98%, #000) ,
+    radial-gradient(circle var(--notch) at 100% var(--notch-y, 70%), #0000 98%, #000);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle var(--notch) at 0 var(--notch-y, 70%), #0000 98%, #000) ,
+    radial-gradient(circle var(--notch) at 100% var(--notch-y, 70%), #0000 98%, #000);
+  mask-composite: intersect;
+}
+
+@media (min-width: 768px) {
+  .ticket.ticket-x {
+    -webkit-mask:
+      radial-gradient(circle var(--notch) at var(--notch-x, 75%) 0, #0000 98%, #000) ,
+      radial-gradient(circle var(--notch) at var(--notch-x, 75%) 100%, #0000 98%, #000);
+    -webkit-mask-composite: source-in;
+    mask:
+      radial-gradient(circle var(--notch) at var(--notch-x, 75%) 0, #0000 98%, #000) ,
+      radial-gradient(circle var(--notch) at var(--notch-x, 75%) 100%, #0000 98%, #000);
+    mask-composite: intersect;
+  }
+}
+
+/* Dashed tear line between ticket body and stub. */
+.perforation {
+  border-color: rgba(255, 255, 255, 0.16);
+  border-style: dashed;
+}
+
 /* Scrolling ticker. Content is duplicated once; the track moves by half its width. */
 @keyframes tix-marquee {
   from { transform: translateX(0); }
@@ -176,14 +210,6 @@ details > summary::-webkit-details-marker {
   animation-play-state: paused;
 }
 
-@keyframes tix-caret {
-  50% { opacity: 0; }
-}
-
-.type-caret {
-  animation: tix-caret 1s steps(1) infinite;
-}
-
 @keyframes tix-live {
   0% { box-shadow: 0 0 0 0 rgba(255, 46, 168, 0.55); }
   100% { box-shadow: 0 0 0 8px rgba(255, 46, 168, 0); }
@@ -195,7 +221,6 @@ details > summary::-webkit-details-marker {
 
 @media (prefers-reduced-motion: reduce) {
   .marquee-track,
-  .type-caret,
   .live-dot {
     animation: none;
   }

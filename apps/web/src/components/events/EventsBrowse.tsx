@@ -9,6 +9,7 @@ import { listListings } from "@/lib/api/listings";
 import { formatFromPrice } from "@/lib/hooks/useUpcomingEvents";
 import { ApiClientError } from "@/lib/api/client";
 import { readAuthToken } from "@/lib/auth/token-storage";
+import { SearchAutocomplete } from "../search/SearchAutocomplete";
 import { Alert } from "../ui/Alert";
 import { EventCard } from "./EventCard";
 
@@ -119,7 +120,7 @@ export function EventsBrowse() {
 
   return (
     <section className="grid gap-5" aria-busy={isLoading}>
-      <EventsSearchForm key={query} initialQuery={query} onSearch={submitSearch} />
+      <SearchAutocomplete key={query} initialQuery={query} onSearch={submitSearch} className="max-w-xl" />
       {isLoading ? (
         <p className="muted-text text-sm" role="status" aria-live="polite">
           Loading events...
@@ -150,48 +151,3 @@ export function EventsBrowse() {
   );
 }
 
-function EventsSearchForm({
-  initialQuery,
-  onSearch
-}: {
-  initialQuery: string;
-  onSearch: (query: string) => void;
-}) {
-  const [draftQuery, setDraftQuery] = useState(initialQuery);
-  return (
-    <form
-      role="search"
-      className="flex max-w-xl items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--surface)] py-1 pl-4 pr-1 focus-within:border-[var(--pink)]"
-      onSubmit={(formEvent) => {
-        formEvent.preventDefault();
-        onSearch(draftQuery);
-      }}
-    >
-      <label className="sr-only" htmlFor="events-search">
-        Search events
-      </label>
-      <input
-        id="events-search"
-        value={draftQuery}
-        onChange={(changeEvent) => setDraftQuery(changeEvent.target.value)}
-        placeholder="Search by event, artist, or venue"
-        className="h-10 min-w-0 flex-1 bg-transparent text-[var(--foreground)] outline-none placeholder:text-[var(--subtle)]"
-      />
-      {initialQuery ? (
-        <button
-          type="button"
-          onClick={() => onSearch("")}
-          className="h-10 rounded-full px-3 text-sm text-[var(--muted)] hover:text-white"
-        >
-          Clear
-        </button>
-      ) : null}
-      <button
-        type="submit"
-        className="h-10 rounded-full bg-[var(--foreground)] px-4 text-sm font-semibold text-[var(--background)] hover:bg-zinc-200"
-      >
-        Search
-      </button>
-    </form>
-  );
-}
