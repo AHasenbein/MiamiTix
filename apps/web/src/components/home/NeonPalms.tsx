@@ -1,15 +1,16 @@
-// Neon palm trees leaning into the hero from off-screen trunks at both page edges.
+// Neon palm trees arcing into the hero from off-screen trunks at both bottom corners.
 // Classic palm silhouette (curved tapered trunk, broad rounded arching fronds) rendered
 // as a glowing tube outline with a translucent fill.
 // Shapes are generated once at module load from a few control points.
 
 type Point = [number, number];
 
-// Viewbox 260×470. The trunk is rooted on the bottom edge of the box (the "ground")
-// and curves up and in to the right, so the tree leans into the page. Mirror for the right.
+// Viewbox 260×470. The trunk comes in from past the bottom-left corner (clipped by the
+// hero, so it runs off screen) and bends in a single arc up and over to the right,
+// leaning into the page. Mirror for the right.
 const CROWN: Point = [130, 150];
-const TRUNK_BASE: Point = [30, 470];
-const TRUNK_CONTROL: Point = [40, 320];
+const TRUNK_BASE: Point = [-40, 560];
+const TRUNK_CONTROL: Point = [-30, 170];
 
 function quad(p0: Point, p1: Point, p2: Point, t: number): Point {
   const u = 1 - t;
@@ -83,7 +84,7 @@ function trunkPath(): string {
     const t = i / 14;
     const [x, y] = quad(TRUNK_BASE, TRUNK_CONTROL, CROWN, t);
     const [nx, ny] = normalAt(TRUNK_BASE, TRUNK_CONTROL, CROWN, t);
-    const half = 30 - 19 * Math.pow(t, 0.8);
+    const half = 32 - 21 * Math.pow(t, 0.8);
     left.push([x + nx * half, y + ny * half]);
     right.push([x - nx * half, y - ny * half]);
   }
@@ -139,9 +140,9 @@ function Palm({ className = "", tone, flicker = false }: PalmProps) {
 export function NeonPalms() {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 hidden overflow-hidden min-[1360px]:block" aria-hidden="true">
-      {/* rooted on the bottom edge at the page sides, leaning in over the hero */}
-      <Palm tone="pink" className="absolute bottom-0 left-[-2rem] h-[88%] w-auto" flicker />
-      <Palm tone="blue" className="absolute bottom-0 right-[-2rem] h-[88%] w-auto -scale-x-100" />
+      {/* trunks run off the bottom corners and arc in over the hero */}
+      <Palm tone="blue" className="absolute bottom-0 left-[-2rem] h-[88%] w-auto" flicker />
+      <Palm tone="pink" className="absolute bottom-0 right-[-2rem] h-[88%] w-auto -scale-x-100" />
     </div>
   );
 }
