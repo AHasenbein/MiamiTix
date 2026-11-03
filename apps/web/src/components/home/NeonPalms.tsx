@@ -9,8 +9,8 @@ type Point = [number, number];
 // hero, so it runs off screen) and bends in a single arc up and over to the right,
 // leaning into the page. Mirror for the right.
 const CROWN: Point = [130, 150];
-const TRUNK_BASE: Point = [-10, 560];
-const TRUNK_CONTROL: Point = [5, 190];
+const TRUNK_BASE: Point = [-60, 560];
+const TRUNK_CONTROL: Point = [-45, 180];
 
 function quad(p0: Point, p1: Point, p2: Point, t: number): Point {
   const u = 1 - t;
@@ -112,8 +112,7 @@ const FRONDS: Array<[Point, Point, number]> = (
 
 const FRONDS_D = FRONDS.map(([control, tip, width]) => frondPath(control, tip, width));
 const TRUNK_D = trunkPath();
-const HUB_D = `M${CROWN[0] - 17} ${CROWN[1]} a17 15 0 1 0 34 0 a17 15 0 1 0 -34 0 Z`;
-const SHAPES = [TRUNK_D, HUB_D, ...FRONDS_D];
+const SHAPES = [TRUNK_D, ...FRONDS_D];
 
 interface PalmProps {
   className?: string;
@@ -131,18 +130,10 @@ function Palm({ className = "", tone, flicker = false }: PalmProps) {
       aria-hidden="true"
       focusable="false"
     >
-      {/* Outlines first, then opaque fills on top: inner edges where shapes overlap get
-          covered, so trunk, crown and leaves read as one merged neon silhouette. */}
-      <g className="neon-palm-outline">
-        {SHAPES.map((d) => (
-          <path key={d} d={d} strokeWidth="5" />
-        ))}
-      </g>
-      <g className="neon-palm-solid">
-        {SHAPES.map((d) => (
-          <path key={d} d={d} />
-        ))}
-      </g>
+      {/* Each shape keeps its own neon outline over a translucent fill. */}
+      {SHAPES.map((d) => (
+        <path key={d} className="neon-palm-fill" d={d} strokeWidth="2.6" />
+      ))}
     </svg>
   );
 }

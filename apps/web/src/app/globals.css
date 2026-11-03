@@ -185,18 +185,12 @@ details > summary::-webkit-details-marker {
     drop-shadow(0 0 24px rgba(34, 211, 255, 0.45));
 }
 
-/* Opaque fills (the translucent tint pre-mixed onto the page background) so they can
-   hide the overlapping outlines underneath. */
-.neon-palm-solid {
-  stroke: none;
+.neon-palm-pink .neon-palm-fill {
+  fill: rgba(255, 46, 168, 0.42);
 }
 
-.neon-palm-pink .neon-palm-solid {
-  fill: #6b1347;
-}
-
-.neon-palm-blue .neon-palm-solid {
-  fill: #0d4a58;
+.neon-palm-blue .neon-palm-fill {
+  fill: rgba(34, 211, 255, 0.34);
 }
 
 .neon-flicker {
