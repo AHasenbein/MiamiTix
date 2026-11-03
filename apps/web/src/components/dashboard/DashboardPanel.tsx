@@ -70,8 +70,7 @@ export function DashboardPanel() {
       <SurfaceCard className="grid gap-5 p-5 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="muted-text text-xs uppercase tracking-[0.18em]">dashboard</p>
-            <h1 className="brand-heading mt-2 break-words text-2xl font-semibold sm:text-3xl">
+            <h1 className="brand-heading break-words text-2xl font-semibold sm:text-3xl">
               {user ? `Welcome, ${user.displayName}` : "Welcome"}
             </h1>
             <p className="muted-text mt-2 text-sm">
@@ -101,19 +100,19 @@ export function DashboardPanel() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <SurfaceCard className="p-5" elevated={false}>
-          <p className="muted-text text-xs uppercase tracking-[0.16em]">Status</p>
+          <p className="muted-text text-xs font-medium">Status</p>
           <p className="brand-heading mt-3 text-base font-medium">Account active</p>
           <p className="muted-text mt-1 text-sm">Session is valid and secured.</p>
         </SurfaceCard>
         <SurfaceCard className="p-5" elevated={false}>
-          <p className="muted-text text-xs uppercase tracking-[0.16em]">Auth</p>
+          <p className="muted-text text-xs font-medium">Auth</p>
           <p className="brand-heading mt-3 text-base font-medium">
             {user?.providers.join(", ") || "Unknown"}
           </p>
           <p className="muted-text mt-1 text-sm">Sign-in method linked to your profile.</p>
         </SurfaceCard>
         <SurfaceCard className="p-5" elevated={false}>
-          <p className="muted-text text-xs uppercase tracking-[0.16em]">Quick action</p>
+          <p className="muted-text text-xs font-medium">Quick action</p>
           <p className="brand-heading mt-3 text-base font-medium">
             {user?.isTrustedSeller ? "List your next ticket" : "Seller approval required"}
           </p>

@@ -138,7 +138,6 @@ export function AuthCard({ mode }: AuthCardProps) {
   return (
     <SurfaceCard className="w-full max-w-[28rem] p-5 sm:p-8">
       <div className="mb-6 grid gap-2 sm:mb-7">
-        <p className="muted-text text-xs uppercase tracking-[0.16em]">Tix</p>
         <h1 className="brand-heading text-2xl font-semibold leading-tight sm:text-3xl">
           {isRegisterMode ? "Create your account" : "Sign in"}
         </h1>
@@ -181,7 +180,7 @@ export function AuthCard({ mode }: AuthCardProps) {
 
       <div className="my-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-[var(--border)]" />
-        <span className="muted-text text-xs uppercase tracking-[0.16em]">or use email</span>
+        <span className="muted-text text-xs font-medium">or use email</span>
         <div className="h-px flex-1 bg-[var(--border)]" />
       </div>
 

@@ -378,7 +378,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
       >
         <div className="grid gap-4 pb-28">
           <header className="grid gap-2 px-1 pt-1">
-            <p className="text-xs uppercase tracking-[0.2em] text-[var(--neon-pink-soft)]">
+            <p className="text-xs font-medium text-[var(--accent)]">
               Sell tickets
             </p>
             <h1 className="brand-heading text-[1.85rem] font-semibold leading-tight">
@@ -405,11 +405,11 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
             helperText="Optional — crop to frame what shows on cards"
           />
 
-          <section className="grid gap-3 rounded-[1.15rem] border border-[var(--border)] bg-[rgba(17,12,31,0.92)] p-4">
+          <section className="grid gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="brand-heading text-lg font-semibold">1 · Event</h2>
               {eventId ? (
-                <span className="rounded-full border border-[rgba(34,211,255,0.4)] bg-[rgba(34,211,255,0.12)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--neon-blue-soft)]">
+                <span className="rounded-full border border-[rgba(129,140,248,0.4)] bg-[rgba(129,140,248,0.12)] px-2.5 py-1 text-[10px] font-semibold text-[var(--accent)]">
                   Matched
                 </span>
               ) : null}
@@ -436,7 +436,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
             />
             {eventSuggestions.length ? (
               <div className="grid gap-2">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--silver)]">
+                <p className="text-[11px] font-medium text-[var(--silver)]">
                   Selling now — tap to autofill
                 </p>
                 <div className="grid gap-2">
@@ -449,8 +449,8 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
                         onClick={() => selectSuggestion(eventSuggestion)}
                         className={`min-h-14 rounded-[0.9rem] border px-3.5 py-3 text-left transition active:scale-[0.99] ${
                           selected
-                            ? "border-[rgba(255,46,168,0.65)] bg-[rgba(255,46,168,0.14)] shadow-[0_0_22px_rgba(255,46,168,0.25)]"
-                            : "border-[var(--border)] bg-[rgba(232,235,243,0.04)]"
+                            ? "border-[rgba(129,140,248,0.65)] bg-[rgba(129,140,248,0.14)]"
+                            : "border-[var(--border)] bg-[rgba(250,250,250,0.04)]"
                         }`}
                       >
                         <p className="text-sm font-semibold text-white">{eventSuggestion.title}</p>
@@ -467,7 +467,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
             ) : null}
           </section>
 
-          <section className="grid gap-3 rounded-[1.15rem] border border-[var(--border)] bg-[rgba(17,12,31,0.92)] p-4">
+          <section className="grid gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
             <h2 className="brand-heading text-lg font-semibold">2 · When & where</h2>
             <div className="grid gap-3">
               <Input
@@ -529,7 +529,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
             </div>
           </section>
 
-          <section className="grid gap-3 rounded-[1.15rem] border border-[var(--border)] bg-[rgba(17,12,31,0.92)] p-4">
+          <section className="grid gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
             <h2 className="brand-heading text-lg font-semibold">3 · Tickets & price</h2>
             <div className="grid gap-2">
               <p className="muted-text text-sm">Seat type</p>
@@ -543,8 +543,8 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
                       onClick={() => setSeatType(option.value)}
                       className={`min-h-16 rounded-[0.9rem] border px-2 py-2.5 text-center transition active:scale-[0.98] ${
                         active
-                          ? "border-[rgba(34,211,255,0.65)] bg-[rgba(34,211,255,0.16)] shadow-[0_0_20px_rgba(34,211,255,0.28)]"
-                          : "border-[var(--border)] bg-[rgba(232,235,243,0.04)]"
+                          ? "border-[rgba(129,140,248,0.65)] bg-[rgba(129,140,248,0.16)]"
+                          : "border-[var(--border)] bg-[rgba(250,250,250,0.04)]"
                       }`}
                     >
                       <span className="block text-sm font-semibold text-white">{option.label}</span>
@@ -606,7 +606,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
           ) : null}
         </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[rgba(7,6,15,0.94)] px-[3vw] pb-[calc(4.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[rgba(9,9,11,0.94)] px-[3vw] pb-[calc(4.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
           <div className="mx-auto flex w-full max-w-lg gap-2">
             <Button
               variant="ghost"
@@ -627,7 +627,6 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
       {/* Desktop — original card layout */}
       <SurfaceCard className="hidden max-w-3xl gap-6 p-5 sm:p-8 md:grid">
         <header className="grid gap-2">
-          <p className="muted-text text-xs uppercase tracking-[0.18em]">sell tickets</p>
           <h1 className="brand-heading text-2xl font-semibold sm:text-3xl">List tickets</h1>
           <p className="muted-text text-sm">
             Type an event name, set seat type and price, then publish.
@@ -731,7 +730,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
           </div>
           {eventSuggestions.length ? (
             <div className="grid gap-1 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-2">
-              <p className="muted-text px-2 pt-1 text-xs uppercase tracking-[0.14em]">
+              <p className="muted-text px-2 pt-1 text-xs font-medium">
                 Selling now
               </p>
               {eventSuggestions.map((eventSuggestion) => (
@@ -757,7 +756,7 @@ export function CreateListingForm({ initialEventId }: CreateListingFormProps = {
             <select
               value={seatType}
               onChange={(event) => setSeatType(event.target.value as "GA" | "VIP" | "OTHER")}
-              className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(62,164,255,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
+              className="h-11 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(129,140,248,0.6)] focus:ring-2 focus:ring-[var(--ring)]"
             >
               <option value="GA">GA</option>
               <option value="VIP">VIP</option>

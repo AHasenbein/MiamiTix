@@ -26,10 +26,10 @@ export function MobileBottomNav({ isAuthenticated, onAuthChange }: MobileBottomN
   const isRegister = pathname.startsWith("/auth/register");
 
   const tabClass = (active: boolean) =>
-    `flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-md)] px-1 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition active:scale-95 ${
+    `flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-md)] px-1 py-1.5 text-[11px] font-medium transition-colors ${
       active
-        ? "bg-[rgba(255,46,168,0.14)] text-white"
-        : "text-[var(--silver)] hover:text-white"
+        ? "bg-[var(--surface-elevated)] text-[var(--foreground)]"
+        : "text-[var(--muted)] hover:text-white"
     }`;
 
   function handleLogout() {
@@ -41,7 +41,7 @@ export function MobileBottomNav({ isAuthenticated, onAuthChange }: MobileBottomN
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[rgba(7,6,15,0.94)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--background)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around gap-1 px-2 py-2">
         <Link href="/" className={tabClass(isHome)} aria-current={isHome ? "page" : undefined}>

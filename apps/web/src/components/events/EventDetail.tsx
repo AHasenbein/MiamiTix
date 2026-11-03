@@ -279,24 +279,26 @@ export function EventDetail({ eventId }: EventDetailProps) {
                 src={event.imageUrl}
               />
             ) : (
-              <div className="h-full w-full bg-[linear-gradient(135deg,rgba(62,164,255,0.22),rgba(255,255,255,0.06))]" />
+              <div className="h-full w-full bg-[var(--surface-elevated)]" />
             )}
           </div>
           <div className="grid min-w-0 flex-1 gap-2">
-            <p className="muted-text text-xs uppercase tracking-[0.18em]">{event.city}</p>
-            <h1 className="brand-heading text-2xl font-semibold">{event.title}</h1>
+            <p className="tabular text-sm text-[var(--accent)]">
+              {formatEventDateTime(event.startAt)}
+              {eventEnded ? " (ended)" : ""}
+            </p>
+            <h1 className="brand-heading text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-4xl">{event.title}</h1>
             {event.artists.length ? (
               <p className="muted-text text-sm">Artists: {event.artists.join(", ")}</p>
             ) : null}
             {event.isHouseMusic ? (
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-[rgba(62,164,255,0.95)]">
+              <p className="text-xs font-medium text-[var(--accent)]">
                 Featured Event
               </p>
             ) : null}
             <p className="muted-text text-sm">
-              {shouldShowVenue ? `${event.venue} - ` : ""}
-              {formatEventDateTime(event.startAt)}
-              {eventEnded ? " (ended)" : ""}
+              {shouldShowVenue ? `${event.venue}, ` : ""}
+              {event.city}
             </p>
             {shouldShowDescription ? (
               <p className="text-sm text-white/90">{event.description}</p>
@@ -396,7 +398,7 @@ export function EventDetail({ eventId }: EventDetailProps) {
             Loading listings...
           </p>
         ) : listings.length ? (
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid gap-2 md:grid-cols-2">
             {listings.map((listing) => (
               <ListingCard listing={listing} key={listing.id} />
             ))}

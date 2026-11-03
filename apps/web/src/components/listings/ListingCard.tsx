@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Listing } from "@/lib/api/listings";
-import { SurfaceCard } from "../ui/SurfaceCard";
 
 interface ListingCardProps {
   listing: Listing;
@@ -12,19 +11,18 @@ export function ListingCard({ listing }: ListingCardProps) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group rounded-[var(--radius-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+      className="group flex items-center justify-between gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
     >
-      <SurfaceCard
-        className="grid aspect-[4/5] content-start gap-1.5 p-3 transition active:scale-[0.99] sm:aspect-square hover:-translate-y-0.5 hover:border-[rgba(34,211,255,0.55)] hover:shadow-[0_18px_38px_rgba(34,211,255,0.22),0_0_0_1px_rgba(255,46,168,0.22)]"
-        elevated={false}
-      >
-        <h3 className="brand-heading line-clamp-2 text-base font-semibold leading-tight sm:text-sm">{listing.title}</h3>
-        <p className="muted-text text-xs">Seat type: {listing.seatType}</p>
-        <p className="text-xs text-white/90">${amount} per ticket</p>
-        <p className="muted-text text-xs">
-          {listing.quantity} ticket{listing.quantity === 1 ? "" : "s"} remaining
+      <div className="min-w-0">
+        <h3 className="line-clamp-1 text-sm font-semibold text-[var(--foreground)]">{listing.title}</h3>
+        <p className="mt-0.5 text-xs text-[var(--muted)]">
+          {listing.seatType} · {listing.quantity} left
         </p>
-      </SurfaceCard>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="tabular text-base font-semibold text-[var(--foreground)]">${amount}</p>
+        <p className="text-[11px] text-[var(--subtle)]">per ticket</p>
+      </div>
     </Link>
   );
 }

@@ -14,32 +14,41 @@ export default function OpenGraphImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 40,
+          justifyContent: "space-between",
+          padding: 88,
           background: BRAND.background,
-          backgroundImage: `radial-gradient(circle at 10% 0%, rgba(255,46,168,0.45), transparent 50%), radial-gradient(circle at 95% 100%, rgba(34,211,255,0.4), transparent 50%)`,
-          color: "#ffffff"
+          color: BRAND.foreground
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 36 }}>
-          <LogoMark size={200} />
-          <div style={{ display: "flex", fontSize: 168, fontWeight: 700, letterSpacing: -4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+          <LogoMark size={96} />
+          <div style={{ display: "flex", fontSize: 72, fontWeight: 800, letterSpacing: -2 }}>
             {BRAND.name}
           </div>
         </div>
-        <div style={{ display: "flex", fontSize: 44, color: "rgba(241,244,251,0.88)" }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: 76,
+            fontWeight: 800,
+            letterSpacing: -2.5,
+            lineHeight: 1.05,
+            maxWidth: 940
+          }}
+        >
           {BRAND.tagline}
         </div>
         <div
           style={{
             display: "flex",
-            width: 520,
-            height: 6,
-            borderRadius: 3,
-            background: `linear-gradient(90deg, ${BRAND.pink}, ${BRAND.blue})`
+            borderTop: `2px solid ${BRAND.border}`,
+            paddingTop: 28,
+            fontSize: 30,
+            color: BRAND.muted
           }}
-        />
+        >
+          $0 platform fees · Verified sellers
+        </div>
       </div>
     ),
     size

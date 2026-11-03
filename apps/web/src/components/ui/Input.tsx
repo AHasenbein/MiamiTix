@@ -25,12 +25,12 @@ export function Input({
 
   return (
     <label className="grid gap-1.5 text-sm">
-      <span className="muted-text">{label}</span>
+      <span className="text-[13px] font-medium text-[var(--silver)]">{label}</span>
       <input
         id={inputId}
         aria-invalid={hasError}
         aria-describedby={describedBy || undefined}
-        className={`h-11 rounded-[var(--radius-md)] border bg-[var(--surface)] px-3 text-[var(--foreground)] outline-none transition focus:border-[rgba(34,211,255,0.6)] focus:ring-2 focus:ring-[var(--ring-blue)] ${
+        className={`h-11 rounded-[var(--radius-md)] border bg-[var(--background)] px-3 text-[var(--foreground)] outline-none transition placeholder:text-zinc-600 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] ${
           hasError ? "border-red-400/50" : "border-[var(--border)]"
         } ${className}`}
         {...props}

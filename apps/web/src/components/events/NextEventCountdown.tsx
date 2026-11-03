@@ -46,20 +46,24 @@ export function NextEventCountdown() {
 
   const headlineArtist = pickHeadlineArtist(nextEvent);
 
+  const dateLabel = new Date(nextEvent.startAt).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric"
+  });
+
   return (
     <Link
       href={`/events/${nextEvent.id}`}
-      className="brand-pill w-fit gap-2.5 !text-white transition hover:!border-[rgba(255,46,168,0.55)] hover:!bg-[rgba(255,46,168,0.12)]"
+      className="group inline-flex w-fit items-center gap-2 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
       aria-label={`Next event: ${headlineArtist}`}
     >
-      <span aria-hidden="true" className="flex items-end gap-[3px]">
-        <span className="eq-bar" />
-        <span className="eq-bar" />
-        <span className="eq-bar" />
-        <span className="eq-bar" />
+      <span className="text-[var(--subtle)]">Next up</span>
+      <span className="font-medium text-[var(--foreground)]">{headlineArtist}</span>
+      <span className="tabular text-xs text-[var(--subtle)]">
+        {dateLabel}
       </span>
-      <span>Next event</span>
-      <span className="font-semibold text-white">{headlineArtist}</span>
+      <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
     </Link>
   );
 }

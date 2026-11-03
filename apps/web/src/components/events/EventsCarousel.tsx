@@ -14,8 +14,8 @@ interface EventsCarouselProps {
 }
 
 export function EventsCarousel({
-  title = "Discover events",
-  subtitle = "Hand-picked nights, just-dropped lineups, and trending listings.",
+  title = "Upcoming events",
+  subtitle = "",
   limit = 10,
   autoAdvanceMs = 9000
 }: EventsCarouselProps) {
@@ -36,7 +36,7 @@ export function EventsCarousel({
         }
       } catch {
         if (!cancelled) {
-          setErrorMessage("Could not load discovery feed.");
+          setErrorMessage("Could not load events.");
         }
       } finally {
         if (!cancelled) {
@@ -91,29 +91,31 @@ export function EventsCarousel({
     >
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <span className="brand-pill">
-            <span className="dot" />
-            Featured tonight
-          </span>
-          <h2 className="brand-heading mt-3 text-2xl font-semibold sm:text-4xl">{title}</h2>
-          <p className="muted-text mt-1 max-w-xl text-sm">{subtitle}</p>
+          <h2 className="brand-heading text-2xl font-bold text-[var(--foreground)] sm:text-3xl">{title}</h2>
+          {subtitle ? <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">{subtitle}</p> : null}
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/events"
+            className="mr-2 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+          >
+            View all →
+          </Link>
           <button
             type="button"
             aria-label="Scroll previous"
             onClick={() => scrollByCards(-1)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(232,235,243,0.06)] text-lg text-[var(--silver)] transition active:scale-95 hover:border-[rgba(34,211,255,0.55)] hover:bg-[rgba(34,211,255,0.1)] hover:text-white hover:shadow-[0_0_18px_rgba(34,211,255,0.45)]"
+            className="hidden h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] text-[var(--silver)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)] hover:text-white sm:inline-flex"
           >
-            <span aria-hidden="true">‹</span>
+            <span aria-hidden="true">←</span>
           </button>
           <button
             type="button"
             aria-label="Scroll next"
             onClick={() => scrollByCards(1)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(232,235,243,0.06)] text-lg text-[var(--silver)] transition active:scale-95 hover:border-[rgba(255,46,168,0.55)] hover:bg-[rgba(255,46,168,0.1)] hover:text-white hover:shadow-[0_0_18px_rgba(255,46,168,0.45)]"
+            className="hidden h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] text-[var(--silver)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)] hover:text-white sm:inline-flex"
           >
-            <span aria-hidden="true">›</span>
+            <span aria-hidden="true">→</span>
           </button>
         </div>
       </header>
@@ -123,7 +125,7 @@ export function EventsCarousel({
           {Array.from({ length: 4 }).map((_unused, index) => (
             <div
               key={index}
-              className="h-72 w-[min(280px,85vw)] shrink-0 animate-pulse rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(232,235,243,0.06)]"
+              className="h-72 w-[min(280px,85vw)] shrink-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--surface-elevated)]"
             />
           ))}
         </div>
@@ -134,7 +136,7 @@ export function EventsCarousel({
       ) : null}
 
       {!isLoading && !errorMessage && !events.length ? (
-        <p className="muted-text text-sm">No events to feature yet — be the first to add one.</p>
+        <p className="muted-text text-sm">No upcoming events yet.</p>
       ) : null}
 
       {!isLoading && events.length ? (
@@ -145,6 +147,7 @@ export function EventsCarousel({
           {events.map((event) => {
             const startDate = new Date(event.startAt);
             const dateLabel = startDate.toLocaleDateString(undefined, {
+              weekday: "short",
               month: "short",
               day: "numeric"
             });
@@ -157,40 +160,27 @@ export function EventsCarousel({
                 key={event.id}
                 data-carousel-card
                 href={`/events/${event.id}`}
-                className="group relative w-[min(280px,85vw)] shrink-0 snap-start overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[linear-gradient(160deg,rgba(24,18,48,0.85),rgba(14,10,28,0.95))] transition active:scale-[0.99] hover:-translate-y-0.5 hover:border-[rgba(255,46,168,0.55)] hover:shadow-[0_18px_46px_rgba(255,46,168,0.28),0_0_0_1px_rgba(34,211,255,0.25)]"
+                className="group grid w-[min(260px,78vw)] shrink-0 snap-start gap-3 rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
-                <div className="relative aspect-[5/4] w-full overflow-hidden">
+                <div className="aspect-square w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-elevated)]">
                   {event.imageUrl ? (
                     <img
                       alt={`${event.title} event image`}
                       src={event.imageUrl}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                      className="h-full w-full object-cover transition-opacity duration-150 group-hover:opacity-90"
                     />
-                  ) : (
-                    <div className="h-full w-full bg-[linear-gradient(135deg,rgba(255,46,168,0.3),rgba(34,211,255,0.25))]" />
-                  )}
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,6,15,0)_45%,rgba(7,6,15,0.85)_100%)]" />
-                  <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[rgba(7,6,15,0.6)] px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[var(--silver)] backdrop-blur">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon-pink)] shadow-[0_0_8px_rgba(255,46,168,0.9)]" />
-                    {event.city}
-                  </div>
-                  <div className="absolute bottom-3 left-3 right-3 grid gap-1">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--neon-blue-soft)]">
-                      {dateLabel} · {timeLabel}
-                    </p>
-                    <h3 className="brand-heading line-clamp-2 text-lg font-semibold leading-tight text-white">
-                      {event.title}
-                    </h3>
-                  </div>
-                </div>
-                <div className="grid gap-1 px-4 py-3">
-                  {event.artists.length ? (
-                    <p className="line-clamp-1 text-xs text-[var(--silver)]">
-                      {event.artists.join(", ")}
-                    </p>
                   ) : null}
-                  <p className="muted-text line-clamp-1 text-xs">
+                </div>
+                <div className="grid gap-0.5">
+                  <p className="tabular text-xs text-[var(--accent)]">
+                    {dateLabel} · {timeLabel}
+                  </p>
+                  <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--foreground)] group-hover:underline group-hover:decoration-[var(--border-strong)] group-hover:underline-offset-4">
+                    {event.title}
+                  </h3>
+                  <p className="line-clamp-1 text-sm text-[var(--muted)]">
                     {event.venue && event.venue !== "TBD" ? event.venue : "Venue TBD"}
+                    {event.city ? `, ${event.city}` : ""}
                   </p>
                 </div>
               </Link>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import type { Event } from "@/lib/api/events";
 import { miamiTimeSuffix } from "@/lib/datetime";
-import { SurfaceCard } from "../ui/SurfaceCard";
 
 interface EventCardProps {
   event: Event;
@@ -31,15 +30,17 @@ export function EventCard({
   const shouldShowVenue = Boolean(event.venue?.trim()) && event.venue.trim() !== "TBD";
 
   return (
-    <SurfaceCard
-      className="relative aspect-[4/5] overflow-hidden p-2.5 transition active:scale-[0.99] sm:aspect-square hover:-translate-y-0.5 hover:border-[rgba(255,46,168,0.55)] hover:shadow-[0_18px_38px_rgba(255,46,168,0.22),0_0_0_1px_rgba(34,211,255,0.22)]"
-      elevated={false}
-    >
+    <div className="relative">
       {onToggleWishlist ? (
         <button
           type="button"
-          className="absolute right-2.5 top-2.5 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-base transition active:scale-95 hover:bg-white/10 disabled:opacity-60"
+          className={`absolute right-2 top-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] border bg-[var(--background)]/90 text-base transition-colors disabled:opacity-60 ${
+            isWishlisted
+              ? "border-[var(--accent)] text-[var(--accent)]"
+              : "border-[var(--border)] text-[var(--silver)] hover:border-[var(--border-strong)] hover:text-white"
+          }`}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={isWishlisted}
           onClick={(eventClick) => {
             eventClick.preventDefault();
             eventClick.stopPropagation();
@@ -52,30 +53,29 @@ export function EventCard({
       ) : null}
       <Link
         href={`/events/${event.id}`}
-        className="group grid h-full grid-rows-[minmax(0,1fr)_auto] gap-2 rounded-[var(--radius-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+        className="group grid gap-3 rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
       >
-        <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)]">
+        <div className="aspect-square overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-elevated)]">
           {event.imageUrl ? (
             <img
               alt={`${event.title} event image`}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+              className="h-full w-full object-cover transition-opacity duration-150 group-hover:opacity-90"
               src={event.imageUrl}
             />
-          ) : (
-            <div className="h-full w-full bg-[linear-gradient(135deg,rgba(62,164,255,0.22),rgba(255,255,255,0.06))]" />
-          )}
-        </div>
-        <div className="grid gap-1 pb-0.5">
-          <p className="muted-text text-xs uppercase tracking-[0.16em]">{event.city}</p>
-          <h3 className="brand-heading line-clamp-2 text-lg font-semibold leading-snug">{event.title}</h3>
-          {shouldShowVenue ? (
-            <p className="muted-text line-clamp-1 text-sm">{event.venue}</p>
           ) : null}
-          <p className="line-clamp-1 text-sm text-white/85">
+        </div>
+        <div className="grid gap-0.5">
+          <p className="tabular line-clamp-1 text-xs text-[var(--accent)]">
             {dateLabel} · {timeLabel}
+          </p>
+          <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--foreground)] group-hover:underline group-hover:decoration-[var(--border-strong)] group-hover:underline-offset-4">
+            {event.title}
+          </h3>
+          <p className="line-clamp-1 text-sm text-[var(--muted)]">
+            {shouldShowVenue ? `${event.venue}, ${event.city}` : event.city}
           </p>
         </div>
       </Link>
-    </SurfaceCard>
+    </div>
   );
 }
