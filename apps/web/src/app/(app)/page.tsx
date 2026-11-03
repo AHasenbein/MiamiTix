@@ -38,7 +38,7 @@ export default function Home() {
 
       <div className="relative isolate">
         <NeonPalms />
-        <section className="page-shell grid items-center gap-10 py-12 sm:py-20 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16 lg:pb-28">
+        <section className="page-shell grid items-center gap-10 py-12 sm:py-20 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16 lg:pb-28 min-[1360px]:pt-36">
           <div className="grid gap-7">
             <h1 className="display-heading text-[clamp(1.85rem,7.4vw,3.6rem)] font-extrabold uppercase leading-[1.02] text-[var(--foreground)]">
               Miami tickets,
