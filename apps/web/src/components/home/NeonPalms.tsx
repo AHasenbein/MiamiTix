@@ -9,8 +9,8 @@ type Point = [number, number];
 // hero, so it runs off screen) and bends in a single arc up and over to the right,
 // leaning into the page. Mirror for the right.
 const CROWN: Point = [130, 150];
-const TRUNK_BASE: Point = [-40, 560];
-const TRUNK_CONTROL: Point = [-30, 170];
+const TRUNK_BASE: Point = [-10, 560];
+const TRUNK_CONTROL: Point = [5, 190];
 
 function quad(p0: Point, p1: Point, p2: Point, t: number): Point {
   const u = 1 - t;
@@ -56,7 +56,7 @@ function frondPath(control: Point, tip: Point, width: number): string {
     const [nx, ny] = normalAt(CROWN, control, tip, t);
     return [x + nx * amount * side, y + ny * amount * side];
   };
-  const profile = (t: number) => width * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.75)), 0.65);
+  const profile = (t: number) => width * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.55)), 0.55);
 
   const outer: Point[] = [];
   for (let i = 0; i <= 12; i += 1) {
@@ -69,7 +69,7 @@ function frondPath(control: Point, tip: Point, width: number): string {
   const inner: Point[] = [];
   for (let i = 11; i >= 1; i -= 1) {
     const t = i / 12;
-    inner.push(offset(t, -profile(t) * 0.28));
+    inner.push(offset(t, -profile(t) * 0.42));
   }
   inner.push(CROWN);
 
@@ -84,7 +84,7 @@ function trunkPath(): string {
     const t = i / 14;
     const [x, y] = quad(TRUNK_BASE, TRUNK_CONTROL, CROWN, t);
     const [nx, ny] = normalAt(TRUNK_BASE, TRUNK_CONTROL, CROWN, t);
-    const half = 32 - 21 * Math.pow(t, 0.8);
+    const half = 32 - 18 * Math.pow(t, 0.8);
     left.push([x + nx * half, y + ny * half]);
     right.push([x - nx * half, y - ny * half]);
   }
@@ -94,7 +94,7 @@ function trunkPath(): string {
 
 // [control point, tip, blade width] relative to the crown, traced from a classic palm
 // silhouette.
-const FROND_SCALE = 0.9;
+const FROND_SCALE = 0.95;
 const FRONDS: Array<[Point, Point, number]> = (
   [
     [[-8, -70], [-65, -72], 17],
@@ -107,11 +107,13 @@ const FRONDS: Array<[Point, Point, number]> = (
 ).map(([control, tip, width]) => [
   [CROWN[0] + control[0] * FROND_SCALE, CROWN[1] + control[1] * FROND_SCALE],
   [CROWN[0] + tip[0] * FROND_SCALE, CROWN[1] + tip[1] * FROND_SCALE],
-  width * FROND_SCALE
+  width * FROND_SCALE * 1.35
 ]);
 
 const FRONDS_D = FRONDS.map(([control, tip, width]) => frondPath(control, tip, width));
 const TRUNK_D = trunkPath();
+const HUB_D = `M${CROWN[0] - 17} ${CROWN[1]} a17 15 0 1 0 34 0 a17 15 0 1 0 -34 0 Z`;
+const SHAPES = [TRUNK_D, HUB_D, ...FRONDS_D];
 
 interface PalmProps {
   className?: string;
@@ -129,10 +131,18 @@ function Palm({ className = "", tone, flicker = false }: PalmProps) {
       aria-hidden="true"
       focusable="false"
     >
-      <path className="neon-palm-fill" d={TRUNK_D} strokeWidth="2.6" />
-      {FRONDS_D.map((d) => (
-        <path key={d} className="neon-palm-fill" d={d} strokeWidth="2.6" />
-      ))}
+      {/* Outlines first, then opaque fills on top: inner edges where shapes overlap get
+          covered, so trunk, crown and leaves read as one merged neon silhouette. */}
+      <g className="neon-palm-outline">
+        {SHAPES.map((d) => (
+          <path key={d} d={d} strokeWidth="5" />
+        ))}
+      </g>
+      <g className="neon-palm-solid">
+        {SHAPES.map((d) => (
+          <path key={d} d={d} />
+        ))}
+      </g>
     </svg>
   );
 }
@@ -141,8 +151,8 @@ export function NeonPalms() {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 hidden overflow-hidden min-[1360px]:block" aria-hidden="true">
       {/* trunks run off the bottom corners and arc in over the hero */}
-      <Palm tone="blue" className="absolute bottom-0 left-[-2rem] h-[88%] w-auto" flicker />
-      <Palm tone="pink" className="absolute bottom-0 right-[-2rem] h-[88%] w-auto -scale-x-100" />
+      <Palm tone="blue" className="absolute bottom-0 left-[-0.5rem] h-[76%] w-auto" flicker />
+      <Palm tone="pink" className="absolute bottom-0 right-[-0.5rem] h-[76%] w-auto -scale-x-100" />
     </div>
   );
 }
