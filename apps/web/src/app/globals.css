@@ -336,3 +336,17 @@ details > summary::-webkit-details-marker {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Events page background. The canvas in OilBackground draws over these gradients, which
+   remain as the fallback when WebGL isn't available. */
+.oil-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(60vmax 40vmax at 20% 25%, rgba(255, 46, 168, 0.2), transparent 70%),
+    radial-gradient(60vmax 40vmax at 80% 70%, rgba(34, 211, 255, 0.14), transparent 70%),
+    var(--background);
+}
