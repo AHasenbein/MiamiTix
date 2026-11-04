@@ -46,9 +46,9 @@ export function EventCard({
       ) : null}
       <Link
         href={`/events/${event.id}`}
-        className="group grid gap-3 rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+        className="group grid rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
       >
-        <div className="aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-elevated)]">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-t-[var(--radius-lg)] bg-[var(--surface-elevated)]">
           {event.imageUrl ? (
             <img
               alt={`${event.title} event image`}
@@ -56,13 +56,18 @@ export function EventCard({
               src={event.imageUrl}
             />
           ) : null}
+          {/* Fades the text panel's dark backing up into the photo so they read as one ticket. */}
+          <div className="absolute inset-x-0 bottom-0 h-6 bg-linear-to-t from-[var(--background)]/85 to-transparent" />
         </div>
-        <EventMeta
-          title={event.title}
-          startAt={event.startAt}
-          where={shouldShowVenue ? event.venue : event.city}
-          fromPrice={fromPrice}
-        />
+        {/* Dark backing keeps the text readable over the oil background. */}
+        <div className="rounded-b-[var(--radius-lg)] bg-[var(--background)]/85 p-2">
+          <EventMeta
+            title={event.title}
+            startAt={event.startAt}
+            where={shouldShowVenue ? event.venue : event.city}
+            fromPrice={fromPrice}
+          />
+        </div>
       </Link>
     </div>
   );

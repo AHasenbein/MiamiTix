@@ -12,6 +12,7 @@ import { readAuthToken } from "@/lib/auth/token-storage";
 import { SearchAutocomplete } from "../search/SearchAutocomplete";
 import { Alert } from "../ui/Alert";
 import { EventCard } from "./EventCard";
+import { OilBackground } from "./OilBackground";
 
 export function EventsBrowse() {
   const router = useRouter();
@@ -120,6 +121,7 @@ export function EventsBrowse() {
 
   return (
     <section className="grid gap-5" aria-busy={isLoading}>
+      <OilBackground imageUrls={events.map((event) => event.imageUrl)} />
       <SearchAutocomplete key={query} initialQuery={query} onSearch={submitSearch} className="max-w-xl" />
       {isLoading ? (
         <p className="muted-text text-sm" role="status" aria-live="polite">
