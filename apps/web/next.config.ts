@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
   ...(siteUrl ? { env: { SITE_URL: siteUrl } } : {}),
   turbopack: {
     root: path.resolve(currentDir, "../../")
+  },
+  // The dashboard page is gone; keep old bookmarks and returnTo links working.
+  async redirects() {
+    return [{ source: "/dashboard/:path*", destination: "/events", permanent: false }];
   }
 };
 

@@ -28,7 +28,6 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
   if (canSell) {
     authedPrimaryItems.push({ href: "/listings/new", label: "Sell tickets" });
   }
-  authedPrimaryItems.push({ href: "/dashboard", label: "Dashboard" });
   const authedSecondaryItems: NavItem[] = [
     { href: "/listings/mine", label: "My listings" },
     { href: "/account", label: "Account" }
