@@ -5,6 +5,7 @@ import { EventOfTheMonth } from "@/components/home/EventOfTheMonth";
 import { EventTicker } from "@/components/home/EventTicker";
 import { SearchAutocomplete } from "@/components/search/SearchAutocomplete";
 import { NextEventTicket } from "@/components/home/NextEventTicket";
+import { NeonPalms } from "@/components/home/NeonPalms";
 
 const steps = [
   {
@@ -35,15 +36,16 @@ export default function Home() {
     <div className="flex flex-1 flex-col">
       <EventTicker />
 
-      <div className="page-shell flex flex-1 flex-col gap-16 py-12 sm:gap-24 sm:py-20">
-        <section className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">
+      <div className="relative isolate">
+        <NeonPalms />
+        <section className="page-shell grid items-center gap-10 py-12 sm:py-20 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16 lg:pb-28 min-[1360px]:pt-36">
           <div className="grid gap-7">
-            <h1 className="brand-heading text-[2.6rem] font-extrabold leading-[0.98] text-[var(--foreground)] sm:text-7xl">
+            <h1 className="display-heading text-[clamp(1.85rem,7.4vw,3.6rem)] font-extrabold uppercase leading-[1.02] text-[var(--foreground)]">
               Miami tickets,
               <br />
               fan to fan.
               <br />
-              <span className="brand-gradient-text">Zero fees.</span>
+              <span className="neon-script mt-2 inline-block text-[1.45em] normal-case leading-none">Zero fees.</span>
             </h1>
             <p className="max-w-lg text-base leading-relaxed text-[var(--muted)] sm:text-lg">
               Buy and resell tickets for club nights, festivals, and concerts. You deal with
@@ -61,6 +63,9 @@ export default function Home() {
           </div>
           <NextEventTicket />
         </section>
+      </div>
+
+      <div className="page-shell flex flex-1 flex-col gap-16 py-12 sm:gap-24 sm:py-20">
 
         <EventsCarousel title="Coming up in Miami" />
 
@@ -68,7 +73,7 @@ export default function Home() {
 
         <section className="grid gap-8 border-t border-[var(--border)] pt-12 md:grid-cols-[16rem_minmax(0,1fr)]">
           <header className="grid content-start gap-5">
-            <h2 className="brand-heading text-3xl font-bold text-[var(--foreground)] sm:text-4xl">
+            <h2 className="display-heading text-2xl font-extrabold uppercase text-[var(--foreground)] sm:text-3xl">
               No middleman.
             </h2>
             <dl className="grid gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)]">
@@ -95,7 +100,7 @@ export default function Home() {
 
         <section className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-10">
           <div>
-            <h2 className="brand-heading text-2xl font-bold text-[var(--foreground)] sm:text-3xl">
+            <h2 className="display-heading text-xl font-extrabold uppercase text-[var(--foreground)] sm:text-2xl">
               Got a spare ticket?
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">

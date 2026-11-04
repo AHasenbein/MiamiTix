@@ -67,7 +67,7 @@ export function EventsCarousel({
     >
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="brand-heading text-2xl font-bold text-[var(--foreground)] sm:text-4xl">{title}</h2>
+          <h2 className="display-heading text-xl font-extrabold uppercase text-[var(--foreground)] sm:text-3xl">{title}</h2>
           {subtitle ? <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">{subtitle}</p> : null}
         </div>
         <div className="flex items-center gap-2">
