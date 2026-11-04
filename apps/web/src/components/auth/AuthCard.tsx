@@ -90,7 +90,7 @@ export function AuthCard({ mode }: AuthCardProps) {
         const result = await register({ displayName, email, password, confirmPassword });
         if (result.token) {
           saveAuthToken(result.token);
-          router.push(returnTo || "/dashboard");
+          router.push(returnTo || "/events");
         } else if (result.verificationRequired && result.verificationEmailSent === false) {
           setErrorMessage(
             "Your account was created, but we couldn't send the verification email. Use \"Resend verification email\" below to try again."
@@ -108,7 +108,7 @@ export function AuthCard({ mode }: AuthCardProps) {
       } else {
         const result = await login({ email, password });
         saveAuthToken(result.token);
-        router.push(returnTo || "/dashboard");
+        router.push(returnTo || "/events");
       }
     } catch (error) {
       if (error instanceof ApiClientError) {
@@ -144,7 +144,7 @@ export function AuthCard({ mode }: AuthCardProps) {
         <p className="muted-text text-sm leading-6">
           {isRegisterMode
             ? "Join the marketplace to buy, sell, and coordinate tickets quickly."
-            : "Continue to your dashboard, listings, and wishlist."}
+            : "Continue to your listings and wishlist."}
         </p>
       </div>
 

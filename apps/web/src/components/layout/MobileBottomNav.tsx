@@ -20,7 +20,6 @@ export function MobileBottomNav({ isAuthenticated, onAuthChange }: MobileBottomN
 
   const isHome = pathname === "/";
   const isEvents = pathname === "/events" || pathname.startsWith("/events/");
-  const isDashboard = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const isAccount = pathname === "/account" || pathname.startsWith("/account/");
   const isLogin = pathname.startsWith("/auth/login");
   const isRegister = pathname.startsWith("/auth/register");
@@ -56,13 +55,6 @@ export function MobileBottomNav({ isAuthenticated, onAuthChange }: MobileBottomN
         </Link>
         {isAuthenticated ? (
           <>
-            <Link
-              href="/dashboard"
-              className={tabClass(isDashboard)}
-              aria-current={isDashboard ? "page" : undefined}
-            >
-              Dashboard
-            </Link>
             <Link
               href="/account"
               className={tabClass(isAccount)}

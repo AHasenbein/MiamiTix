@@ -22,7 +22,7 @@ export function OAuthCallbackClient() {
   const returnTo = safeReturnTo(searchParams.get("returnTo"));
   const [isRedirectSlow, setIsRedirectSlow] = useState(false);
   // takeOAuthReturnTo() clears storage, and dev Strict Mode runs effects twice, so hold the
-  // value in a ref to keep the second run from falling back to /dashboard.
+  // value in a ref to keep the second run from falling back to /events.
   const storedReturnToRef = useRef<string | null | undefined>(undefined);
   const storedNonceRef = useRef<string | null | undefined>(undefined);
 
@@ -48,7 +48,7 @@ export function OAuthCallbackClient() {
       if (storedReturnToRef.current === undefined) {
         storedReturnToRef.current = takeOAuthReturnTo();
       }
-      router.replace(returnTo || storedReturnToRef.current || "/dashboard");
+      router.replace(returnTo || storedReturnToRef.current || "/events");
       return () => {
         clearTimeout(timeout);
       };
@@ -64,7 +64,7 @@ export function OAuthCallbackClient() {
             Signing you in...
           </p>
           {isRedirectSlow ? (
-            <ButtonLink href={returnTo || "/dashboard"} variant="secondary" className="w-full sm:w-auto">
+            <ButtonLink href={returnTo || "/events"} variant="secondary" className="w-full sm:w-auto">
               Continue
             </ButtonLink>
           ) : null}
