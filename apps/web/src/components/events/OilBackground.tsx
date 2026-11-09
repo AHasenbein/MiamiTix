@@ -1,8 +1,27 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { extractPalette, FALLBACK_PALETTE, PALETTE_SIZE } from "@/lib/images/extract-palette";
-import type { Rgb } from "@/lib/images/extract-palette";
+
+type Rgb = [number, number, number];
+
+function hex(value: string): Rgb {
+  const n = parseInt(value.slice(1), 16);
+  return [(n >> 16) / 255, ((n >> 8) & 0xff) / 255, (n & 0xff) / 255];
+}
+
+// Miami Tix brand pink and blue (from public/brand), each with a lighter and darker shade.
+// Ordered as a loop so neighbours blend: the dark ends meet in deep violet, the light ends in lavender.
+const BRAND_PALETTE: Rgb[] = [
+  "#ff7fd4", // light pink
+  "#ff5dc6", // brand pink
+  "#ff2d6e", // brand hot pink (logo shadow)
+  "#a8105a", // dark magenta
+  "#1028a8", // navy
+  "#1a52ff", // brand deep blue (logo shadow)
+  "#2f93ff", // brand blue
+  "#5cb3ff" // light blue
+].map(hex);
+const PALETTE_SIZE = BRAND_PALETTE.length;
 
 const VERTEX_SHADER = `
 attribute vec2 position;
@@ -16,8 +35,10 @@ uniform vec2 resolution;
 uniform float time;
 uniform vec3 colors[${PALETTE_SIZE}];
 
-// Brightness ceiling, so the colours never overpower the page text and cards.
-const float MAX_LUMINANCE = 0.11;
+// Soft brightness ceiling, so the colours never overpower the page text and cards. It compresses
+// rather than clamps, so the light shades still read lighter than the brand and dark shades.
+const float MAX_LUMINANCE = 0.55;
+const float KNEE = 0.3;
 const vec3 BASE = vec3(0.05);
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -67,9 +88,8 @@ void main() {
 
   vec3 linear = pow(color, vec3(2.2));
   float luminance = dot(linear, vec3(0.2126, 0.7152, 0.0722));
-  if (luminance > MAX_LUMINANCE) {
-    color = pow(linear * MAX_LUMINANCE / luminance, vec3(1.0 / 2.2));
-  }
+  float compressed = MAX_LUMINANCE * (1.0 + KNEE) * luminance / (luminance + KNEE);
+  color = pow(linear * compressed / max(luminance, 1e-5), vec3(1.0 / 2.2));
 
   // Dark gradients band visibly without a little dither.
   gl_FragColor = vec4(color + (hash(gl_FragCoord.xy) - 0.5) / 255.0, 1.0);
@@ -79,7 +99,6 @@ void main() {
 const RENDER_SCALE = 0.5;
 const MAX_RENDER_WIDTH = 960;
 const FRAME_INTERVAL_MS = 1000 / 30;
-const COLOR_EASING = 0.03;
 const REDUCED_MOTION_TIME = 40;
 
 function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
@@ -90,32 +109,9 @@ function compile(gl: WebGLRenderingContext, type: number, source: string): WebGL
   return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;
 }
 
-interface OilBackgroundProps {
-  imageUrls: Array<string | undefined>;
-}
-
-/** Page background of slowly swirling colour, like oil, in hues sampled from the event photos. */
-export function OilBackground({ imageUrls }: OilBackgroundProps) {
+/** Page background of slowly swirling colour, like oil, in Miami Tix brand pinks and blues. */
+export function OilBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const targetColors = useRef<Rgb[]>(FALLBACK_PALETTE);
-  const redraw = useRef<(() => void) | null>(null);
-  const urlKey = [...new Set(imageUrls.filter(Boolean))].join("\n");
-
-  useEffect(() => {
-    if (!urlKey) {
-      return;
-    }
-    let cancelled = false;
-    void extractPalette(urlKey.split("\n")).then((palette) => {
-      if (!cancelled) {
-        targetColors.current = palette;
-        redraw.current?.();
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [urlKey]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -149,13 +145,13 @@ export function OilBackground({ imageUrls }: OilBackgroundProps) {
     const colorsUniform = gl.getUniformLocation(program, "colors");
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let colors = targetColors.current.map((color): Rgb => [...color]);
+    const colors = new Float32Array(BRAND_PALETTE.flat());
     let frame = 0;
     let lastDraw = 0;
 
     function draw(timeSeconds: number) {
       gl!.uniform1f(timeUniform, timeSeconds);
-      gl!.uniform3fv(colorsUniform, new Float32Array(colors.flat()));
+      gl!.uniform3fv(colorsUniform, colors);
       gl!.drawArrays(gl!.TRIANGLES, 0, 3);
     }
 
@@ -176,9 +172,6 @@ export function OilBackground({ imageUrls }: OilBackgroundProps) {
         return;
       }
       lastDraw = now;
-      colors = colors.map((color, i) =>
-        color.map((channel, c) => channel + (targetColors.current[i][c] - channel) * COLOR_EASING) as Rgb
-      );
       draw(now / 1000);
     }
 
@@ -200,26 +193,17 @@ export function OilBackground({ imageUrls }: OilBackgroundProps) {
 
     function handleContextLost() {
       stop();
-      redraw.current = null;
       canvas!.style.display = "none";
     }
 
     resize();
     start();
-    if (reducedMotion) {
-      redraw.current = () => {
-        colors = targetColors.current;
-        draw(REDUCED_MOTION_TIME);
-      };
-      redraw.current();
-    }
     window.addEventListener("resize", resize);
     document.addEventListener("visibilitychange", handleVisibility);
     canvas.addEventListener("webglcontextlost", handleContextLost);
 
     return () => {
       stop();
-      redraw.current = null;
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", handleVisibility);
       canvas.removeEventListener("webglcontextlost", handleContextLost);

@@ -120,16 +120,11 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                 </Button>
               </>
             ) : (
-              <>
-                {!isAuthRoute ? (
-                  <ButtonLink href="/auth/login" variant="ghost" className="h-9 px-3">
-                    Log in
-                  </ButtonLink>
-                ) : null}
-                <ButtonLink href="/auth/register" className="ml-1 h-9 px-3.5">
-                  Create account
+              !isAuthRoute ? (
+                <ButtonLink href="/auth/login" className="ml-1 h-9 px-3.5">
+                  Log in / Sign up
                 </ButtonLink>
-              </>
+              ) : null
             )}
           </nav>
         </div>
@@ -190,11 +185,8 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                     Events
                   </ButtonLink>
                 ) : null}
-                <ButtonLink href="/auth/login" variant="ghost" className="h-9 !min-h-9 !px-3 text-xs">
-                  Log in
-                </ButtonLink>
-                <ButtonLink href="/auth/register" className="h-9 !min-h-9 !px-3 text-xs">
-                  Sign up
+                <ButtonLink href="/auth/login" className="h-9 !min-h-9 !px-3 text-xs">
+                  Log in / Sign up
                 </ButtonLink>
               </>
             ) : null}

@@ -21,8 +21,6 @@ export function MobileBottomNav({ isAuthenticated, onAuthChange }: MobileBottomN
   const isHome = pathname === "/";
   const isEvents = pathname === "/events" || pathname.startsWith("/events/");
   const isAccount = pathname === "/account" || pathname.startsWith("/account/");
-  const isLogin = pathname.startsWith("/auth/login");
-  const isRegister = pathname.startsWith("/auth/register");
 
   const tabClass = (active: boolean) =>
     `flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-md)] px-1 py-1.5 text-[11px] font-medium transition-colors ${
@@ -67,22 +65,9 @@ export function MobileBottomNav({ isAuthenticated, onAuthChange }: MobileBottomN
             </button>
           </>
         ) : (
-          <>
-            <Link
-              href="/auth/login"
-              className={tabClass(isLogin)}
-              aria-current={isLogin ? "page" : undefined}
-            >
-              Log in
-            </Link>
-            <Link
-              href="/auth/register"
-              className={tabClass(isRegister)}
-              aria-current={isRegister ? "page" : undefined}
-            >
-              Sign up
-            </Link>
-          </>
+          <Link href="/auth/login" className={tabClass(false)}>
+            Log in / Sign up
+          </Link>
         )}
       </div>
     </nav>

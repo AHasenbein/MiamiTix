@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
@@ -23,13 +22,15 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { SurfaceCard } from "../ui/SurfaceCard";
 
-interface AuthCardProps {
-  mode: "login" | "register";
-}
+type AuthMode = "login" | "register";
 
-export function AuthCard({ mode }: AuthCardProps) {
+/** Log in and sign up on one card, with a toggle between the two. `?mode=signup` opens sign up. */
+export function AuthCard() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [mode, setMode] = useState<AuthMode>(
+    searchParams.get("mode") === "signup" ? "register" : "login"
+  );
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,6 +66,14 @@ export function AuthCard({ mode }: AuthCardProps) {
         setIsLoadingProviders(false);
       });
   }, []);
+
+  function switchMode(next: AuthMode) {
+    if (next === mode) return;
+    setMode(next);
+    setErrorMessage("");
+    setSuccessMessage("");
+    setConfirmPassword("");
+  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -137,6 +146,33 @@ export function AuthCard({ mode }: AuthCardProps) {
 
   return (
     <SurfaceCard className="w-full max-w-[28rem] p-5 sm:p-8">
+      <div
+        role="group"
+        aria-label="Log in or sign up"
+        className="mb-6 grid grid-cols-2 gap-1 rounded-xl border border-[var(--border)] bg-white/[0.03] p-1"
+      >
+        {(
+          [
+            ["login", "Log in"],
+            ["register", "Sign up"]
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={mode === value}
+            onClick={() => switchMode(value)}
+            className={`min-h-10 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
+              mode === value
+                ? "bg-white/[0.12] text-[var(--foreground)] shadow-sm"
+                : "text-[var(--muted)] hover:text-[var(--foreground)]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-6 grid gap-2 sm:mb-7">
         <h1 className="brand-heading text-2xl font-semibold leading-tight sm:text-3xl">
           {isRegisterMode ? "Create your account" : "Sign in"}
@@ -293,17 +329,6 @@ export function AuthCard({ mode }: AuthCardProps) {
         ) : null}
       </form>
 
-      <p className="muted-text mt-6 text-center text-sm">
-        {isRegisterMode ? "Already have an account? " : "Need an account? "}
-        <Link
-          href={`${isRegisterMode ? "/auth/login" : "/auth/register"}${
-            returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""
-          }`}
-          className="text-[var(--foreground)] underline underline-offset-4"
-        >
-          {isRegisterMode ? "Log in" : "Create one"}
-        </Link>
-      </p>
     </SurfaceCard>
   );
 }
