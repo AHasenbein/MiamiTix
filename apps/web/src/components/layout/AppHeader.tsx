@@ -178,14 +178,14 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                 {!isHome ? (
                   <ButtonLink
                     href="/events"
-                    variant={isEvents ? "secondary" : "ghost"}
-                    className="h-9 !min-h-9 !px-3 text-xs"
+                    variant="ghost"
+                    className="h-10 !min-h-10 !px-3 text-xs"
                     aria-current={isEvents ? "page" : undefined}
                   >
                     Events
                   </ButtonLink>
                 ) : null}
-                <ButtonLink href="/auth/login" className="h-9 !min-h-9 !px-3 text-xs">
+                <ButtonLink href="/auth/login" className="h-10 !min-h-10 !px-5 text-sm">
                   Log in
                 </ButtonLink>
               </>

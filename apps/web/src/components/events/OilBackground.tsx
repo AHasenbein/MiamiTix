@@ -37,7 +37,7 @@ uniform vec3 colors[${PALETTE_SIZE}];
 
 // Soft brightness ceiling, so the colours never overpower the page text and cards. It compresses
 // rather than clamps, so the light shades still read lighter than the brand and dark shades.
-const float MAX_LUMINANCE = 0.55;
+const float MAX_LUMINANCE = 0.4;
 const float KNEE = 0.3;
 const vec3 BASE = vec3(0.05);
 
