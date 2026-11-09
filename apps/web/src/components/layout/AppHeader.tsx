@@ -105,10 +105,9 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
         <div className="page-shell flex h-16 items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 text-base font-bold tracking-tight text-[var(--foreground)]"
+            className="flex items-center"
           >
-            <LogoBadge />
-            <span>Tix</span>
+            <BrandMark />
           </Link>
 
           <nav className="flex items-center gap-1">
@@ -152,10 +151,9 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
             {!isEvents ? (
               <Link
                 href="/"
-                className="flex min-h-11 shrink-0 items-center gap-2 text-base font-bold tracking-tight text-[var(--foreground)]"
+                className="flex min-h-11 shrink-0 items-center"
               >
-                <LogoBadge />
-                <span>Tix</span>
+                <BrandMark />
               </Link>
             ) : null}
           </div>
@@ -207,13 +205,11 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
   );
 }
 
-function LogoBadge() {
+// Signature monogram, cut from brand/source/monograms/signature-2400.jpg with its #111111
+// ground made transparent (artwork otherwise unchanged).
+function BrandMark() {
   return (
-    <span
-      aria-hidden="true"
-      className="inline-flex h-6 w-6 items-center justify-center rounded-[5px] bg-[var(--foreground)] text-[11px] font-extrabold tracking-tight text-[var(--background)]"
-    >
-      tx
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/brand/monogram-signature.png" alt="Tix" width={44} height={44} className="h-11 w-11" />
   );
 }

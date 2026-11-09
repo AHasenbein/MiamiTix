@@ -56,13 +56,7 @@ export function NextEventTicket() {
       style={{ "--notch-y": `calc(100% - ${STUB_HEIGHT})` } as CSSProperties}
     >
       <div className="grid gap-4 p-4 sm:p-5">
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-2 font-medium text-[var(--pink-soft)]">
-            <span className="live-dot h-2 w-2 rounded-full bg-[var(--pink)]" aria-hidden="true" />
-            Next up
-          </span>
-          <span className="tabular text-[var(--subtle)]">Admit one</span>
-        </div>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-pink)]">Featured ticket</p>
         <Link href={`/events/${event.id}`} tabIndex={-1} className="block aspect-[16/10] overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface)]">
           {event.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

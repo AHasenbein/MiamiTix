@@ -4,6 +4,7 @@ import { env } from "../../../config/env.js";
 import type {
   EmailSender,
   PurchaseRequestEmailParams,
+  SellerApplicationEmailParams,
   VerificationEmailResult
 } from "../domain/email-sender.js";
 
@@ -218,6 +219,44 @@ export class VerificationEmailSender implements EmailSender {
       });
     } catch (error) {
       console.error("[email] purchase request send failed:", error);
+      throw error;
+    }
+  }
+
+  async sendSellerApplicationEmail(params: SellerApplicationEmailParams): Promise<void> {
+    const text = [
+      "New verified seller application on Miami Tix.",
+      "",
+      `Name: ${params.name}`,
+      `Email: ${params.email}`,
+      "",
+      "About them:",
+      params.description,
+      "",
+      "Reply to this email to reach the applicant."
+    ].join("\n");
+
+    if (!isSmtpConfigured()) {
+      console.log(`[email] seller application (would go to ${params.to}):\n${text}`);
+      return;
+    }
+
+    try {
+      const transporter = createTransporter();
+      await transporter.sendMail({
+        from: env.EMAIL_FROM,
+        to: params.to,
+        replyTo: params.email,
+        subject: `Verified seller application: ${params.name}`,
+        text,
+        html: `<p><strong>New verified seller application on Miami Tix.</strong></p>
+<p>Name: ${escapeHtml(params.name)}<br>Email: ${escapeHtml(params.email)}</p>
+<p>About them:</p>
+<p style="white-space:pre-wrap;">${escapeHtml(params.description)}</p>
+<p>Reply to this email to reach the applicant.</p>`
+      });
+    } catch (error) {
+      console.error("[email] seller application send failed:", error);
       throw error;
     }
   }

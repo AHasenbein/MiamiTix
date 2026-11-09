@@ -121,7 +121,7 @@ interface PalmProps {
 }
 
 // Mirror with -scale-x-100 for the right-hand side.
-function Palm({ className = "", tone, flicker = false }: PalmProps) {
+export function Palm({ className = "", tone, flicker = false }: PalmProps) {
   return (
     <svg
       viewBox="0 0 260 470"
@@ -138,11 +138,12 @@ function Palm({ className = "", tone, flicker = false }: PalmProps) {
   );
 }
 
-export function NeonPalms() {
+/** `left={false}` drops the blue page-edge palm (e.g. when it's drawn inside the hero logo instead). */
+export function NeonPalms({ left = true }: { left?: boolean }) {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 hidden overflow-hidden min-[1360px]:block" aria-hidden="true">
       {/* trunks run off the bottom corners and arc in over the hero */}
-      <Palm tone="blue" className="absolute bottom-0 left-[-0.5rem] h-[76%] w-auto" flicker />
+      {left ? <Palm tone="blue" className="absolute bottom-0 left-[-0.5rem] h-[76%] w-auto" flicker /> : null}
       <Palm tone="pink" className="absolute bottom-0 right-[-0.5rem] h-[76%] w-auto -scale-x-100" />
     </div>
   );
