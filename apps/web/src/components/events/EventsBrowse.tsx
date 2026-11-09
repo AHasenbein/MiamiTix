@@ -121,7 +121,7 @@ export function EventsBrowse() {
 
   return (
     <section className="grid gap-5" aria-busy={isLoading}>
-      <OilBackground imageUrls={events.map((event) => event.imageUrl)} />
+      <OilBackground />
       <SearchAutocomplete key={query} initialQuery={query} onSearch={submitSearch} className="max-w-xl" />
       {isLoading ? (
         <p className="muted-text text-sm" role="status" aria-live="polite">

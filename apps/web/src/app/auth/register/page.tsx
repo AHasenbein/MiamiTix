@@ -1,16 +1,15 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import { AuthCard } from "@/components/auth/AuthCard";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Create Account",
-  description: "Create your Tix account for event ticket trading."
-};
-
-export default function RegisterPage() {
-  return (
-    <Suspense fallback={<p className="muted-text text-sm">Loading registration...</p>}>
-      <AuthCard mode="register" />
-    </Suspense>
-  );
+// Sign up now lives on the login page; keep old links working.
+export default async function RegisterPage({
+  searchParams
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const { returnTo } = await searchParams;
+  const params = new URLSearchParams({ mode: "signup" });
+  if (typeof returnTo === "string") {
+    params.set("returnTo", returnTo);
+  }
+  redirect(`/auth/login?${params}`);
 }

@@ -82,7 +82,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/listings/new">List a ticket</ButtonLink>
-            <ButtonLink href="/auth/register" variant="secondary">
+            <ButtonLink href="/auth/login?mode=signup" variant="secondary">
               Create an account
             </ButtonLink>
           </div>
