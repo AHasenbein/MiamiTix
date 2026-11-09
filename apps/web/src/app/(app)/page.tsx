@@ -19,7 +19,7 @@ export default function Home() {
           <div className="flex flex-col gap-7 lg:self-stretch lg:justify-between lg:gap-0">
             <h1 className="display-heading text-[clamp(1.85rem,7.4vw,3.6rem)] font-extrabold uppercase leading-[1.02] text-[var(--foreground)]">
               {/* Signature wordmark (brand/source/wordmark-signature.png, background made transparent). */}
-              <span className="relative block w-full max-w-[28rem]">
+              <span className="relative block w-[80%] max-w-[22rem]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/brand/wordmark-signature.png"
