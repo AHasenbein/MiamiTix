@@ -66,7 +66,7 @@ export function MobileBottomNav({ isAuthenticated, onAuthChange }: MobileBottomN
           </>
         ) : (
           <Link href="/auth/login" className={tabClass(false)}>
-            Log in / Sign up
+            Log in
           </Link>
         )}
       </div>

@@ -122,7 +122,7 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
             ) : (
               !isAuthRoute ? (
                 <ButtonLink href="/auth/login" className="ml-1 h-9 px-3.5">
-                  Log in / Sign up
+                  Log in
                 </ButtonLink>
               ) : null
             )}
@@ -186,7 +186,7 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
                   </ButtonLink>
                 ) : null}
                 <ButtonLink href="/auth/login" className="h-9 !min-h-9 !px-3 text-xs">
-                  Log in / Sign up
+                  Log in
                 </ButtonLink>
               </>
             ) : null}
