@@ -20,7 +20,16 @@ export interface PurchaseRequestEmailParams {
   listingUrl?: string;
 }
 
+export interface SellerApplicationEmailParams {
+  /** Where applications go. Server-side only; never sent to the browser. */
+  to: string;
+  name: string;
+  email: string;
+  description: string;
+}
+
 export interface EmailSender {
   sendVerificationEmail(email: string, verificationUrl: string): Promise<VerificationEmailResult>;
   sendPurchaseRequestEmail(params: PurchaseRequestEmailParams): Promise<void>;
+  sendSellerApplicationEmail(params: SellerApplicationEmailParams): Promise<void>;
 }

@@ -11,6 +11,8 @@
   --muted: #adadad;
   --subtle: #8a8a8a;
   --silver: #d4d4d4;
+  --brand-blue: #2f93ff; /* Miami Tix brand blue */
+  --brand-pink: #ff5dc6; /* Miami Tix brand pink */
   --pink: #ff2ea8;
   --pink-soft: #ff66c4;
   --blue: #22d3ff;
@@ -36,8 +38,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-jetbrains);
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
 }
 
 html,
@@ -49,8 +51,7 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, sans-serif;
-  font-feature-settings: "cv11", "ss01";
+  font-family: var(--font-body), system-ui, sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
@@ -143,14 +144,21 @@ details > summary::-webkit-details-marker {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
 }
 
+/* Headlines use Standing Room Only NF. It ships one weight, so never let the browser fake a
+   bold from the font-bold / font-extrabold utilities these headings carry. */
 .brand-heading {
-  letter-spacing: -0.045em;
+  font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0.01em;
 }
 
 /* Wide display face for page titles and home section headings. */
 .display-heading {
-  font-family: var(--font-display), var(--font-inter), system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0.01em;
 }
 
 /* Neon-sign script for one hero phrase. */
@@ -158,12 +166,13 @@ details > summary::-webkit-details-marker {
   font-family: var(--font-neon), cursive;
   font-weight: 400;
   letter-spacing: 0;
-  color: #ffd6ee;
+  /* Miami Tix brand pink #FF5DC6, glowing out into bold pink #FF2C70. */
+  color: #ff5dc6;
   text-shadow:
-    0 0 2px #fff,
-    0 0 8px var(--pink),
-    0 0 22px var(--pink),
-    0 0 44px rgba(255, 46, 168, 0.55);
+    0 0 2px #ffd0ee,
+    0 0 8px #ff5dc6,
+    0 0 22px #ff5dc6,
+    0 0 44px rgba(255, 44, 112, 0.6);
 }
 
 /* Neon palm trees growing in from the page edges in the hero. */
@@ -290,7 +299,7 @@ details > summary::-webkit-details-marker {
 
 /* Small section label. Plain text, no pill, no glow. */
 .eyebrow {
-  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-family: "Courier New", Courier, monospace;
   font-size: 0.75rem;
   color: var(--subtle);
 }
@@ -325,8 +334,9 @@ details > summary::-webkit-details-marker {
 
 /* Prices, dates, counts. */
 .tabular {
-  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-family: "Courier New", Courier, monospace;
   font-variant-numeric: tabular-nums;
+  font-weight: 700; /* Courier New's regular strokes are too thin at small sizes on the dark background */
 }
 
 .scrollbar-none {

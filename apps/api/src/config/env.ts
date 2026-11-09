@@ -20,6 +20,13 @@ const envSchema = z.object({
   MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
   MONGODB_DB_NAME: z.string().min(1).default("ticketsplice"),
   TRUSTED_SELLER_EMAILS: z.string().default(""),
+  // Inbox for "apply to be a verified seller" submissions. Falls back to the first TRUSTED_SELLER_EMAILS entry.
+  SELLER_APPLICATIONS_EMAIL: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined)
+    .pipe(z.email().optional()),
   REQUIRE_EMAIL_VERIFICATION: z
     .union([z.literal("true"), z.literal("false")])
     .default("false")

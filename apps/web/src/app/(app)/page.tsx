@@ -5,31 +5,7 @@ import { EventOfTheMonth } from "@/components/home/EventOfTheMonth";
 import { EventTicker } from "@/components/home/EventTicker";
 import { SearchAutocomplete } from "@/components/search/SearchAutocomplete";
 import { NextEventTicket } from "@/components/home/NextEventTicket";
-import { NeonPalms } from "@/components/home/NeonPalms";
-
-const steps = [
-  {
-    title: "Find the event",
-    description:
-      "Search by artist, venue, or event and save the nights you're watching to your wishlist."
-  },
-  {
-    title: "Request the tickets",
-    description:
-      "Pick a listing and leave your number. The seller gets your request right away."
-  },
-  {
-    title: "Settle it with the seller",
-    description:
-      "You agree on the handoff directly. Tix doesn't take a cut from either side."
-  }
-];
-
-const facts = [
-  { label: "Buyer fee", value: "$0" },
-  { label: "Seller fee", value: "$0" },
-  { label: "Sellers", value: "Verified" }
-];
+import { SellerApplicationForm } from "@/components/home/SellerApplicationForm";
 
 export default function Home() {
   return (
@@ -37,28 +13,50 @@ export default function Home() {
       <EventTicker />
 
       <div className="relative isolate">
-        <NeonPalms />
-        <section className="page-shell grid items-center gap-10 py-12 sm:py-20 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16 lg:pb-28 min-[1360px]:pt-36">
-          <div className="grid gap-7">
+        {/* Neon palms are switched off for now. To bring them back: <NeonPalms /> from
+            @/components/home/NeonPalms (or <Palm tone="blue" /> inside the wordmark). */}
+        <section className="page-shell grid items-center gap-10 py-12 sm:py-20 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start lg:gap-16 lg:pb-28 lg:pt-12">
+          {/* On desktop this column matches the featured ticket's height, items spread evenly. */}
+          <div className="flex flex-col gap-7 lg:self-stretch lg:justify-between lg:gap-0">
             <h1 className="display-heading text-[clamp(1.85rem,7.4vw,3.6rem)] font-extrabold uppercase leading-[1.02] text-[var(--foreground)]">
-              Miami tickets,
-              <br />
-              fan to fan.
-              <br />
-              <span className="neon-script mt-2 inline-block text-[1.45em] normal-case leading-none">Zero fees.</span>
+              {/* Signature wordmark (brand/source/wordmark-signature.png, background made transparent). */}
+              <span className="relative block w-full max-w-[28rem]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/brand/wordmark-signature.png"
+                  alt="Miami Tix"
+                  width={1000}
+                  height={499}
+                  className="block h-auto w-full"
+                />
+              </span>
+              <span className="mt-4 block">Zero fees</span>
             </h1>
-            <p className="max-w-lg text-base leading-relaxed text-[var(--muted)] sm:text-lg">
-              Buy and resell tickets for club nights, festivals, and concerts. You deal with
-              the seller directly, and Tix never takes a cut.
-            </p>
-            <SearchAutocomplete size="lg" className="max-w-lg" />
-            <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-              <Link href="/events" className="text-[var(--silver)] underline decoration-[var(--border-strong)] underline-offset-4 hover:text-white">
-                Browse all events
-              </Link>
-              <Link href="/listings/new" className="text-[var(--silver)] underline decoration-[var(--border-strong)] underline-offset-4 hover:text-white">
-                Sell your tickets
-              </Link>
+            {/* The palms are a background layer (-z-10); this content sits on top of them. */}
+            <div className="contents">
+              <div className="grid max-w-lg grid-cols-2 gap-3">
+                <ButtonLink
+                  href="/events"
+                  className="h-14 !bg-[var(--brand-blue)] text-base font-bold uppercase tracking-wide !text-[#111111] hover:brightness-110 sm:h-16 sm:text-lg"
+                >
+                  Get tickets
+                </ButtonLink>
+                <ButtonLink
+                  href="/listings/new"
+                  className="h-14 !bg-[var(--brand-pink)] text-base font-bold uppercase tracking-wide !text-[#111111] hover:brightness-110 sm:h-16 sm:text-lg"
+                >
+                  Sell tickets
+                </ButtonLink>
+              </div>
+              <SearchAutocomplete size="lg" className="max-w-lg" />
+              <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+                <Link href="/events" className="text-[var(--silver)] underline decoration-[var(--border-strong)] underline-offset-4 hover:text-white">
+                  Browse all events
+                </Link>
+                <Link href="/listings/new" className="text-[var(--silver)] underline decoration-[var(--border-strong)] underline-offset-4 hover:text-white">
+                  Sell your tickets
+                </Link>
+              </div>
             </div>
           </div>
           <NextEventTicket />
@@ -71,32 +69,7 @@ export default function Home() {
 
         <EventOfTheMonth />
 
-        <section className="grid gap-8 border-t border-[var(--border)] pt-12 md:grid-cols-[16rem_minmax(0,1fr)]">
-          <header className="grid content-start gap-5">
-            <h2 className="display-heading text-2xl font-extrabold uppercase text-[var(--foreground)] sm:text-3xl">
-              No middleman.
-            </h2>
-            <dl className="grid gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)]">
-              {facts.map((fact) => (
-                <div key={fact.label} className="flex items-baseline justify-between bg-[var(--background)] px-4 py-3">
-                  <dt className="text-xs text-[var(--subtle)]">{fact.label}</dt>
-                  <dd className="tabular font-semibold text-[var(--foreground)]">{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </header>
-          <ol className="grid gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)] md:grid-cols-3">
-            {steps.map((step, index) => (
-              <li key={step.title} className="bg-[var(--background)] p-5 sm:p-6">
-                <span className={`tabular text-sm ${index === 1 ? "text-[var(--blue-soft)]" : "text-[var(--pink-soft)]"}`}>
-                  0{index + 1}
-                </span>
-                <h3 className="mt-3 text-base font-semibold text-[var(--foreground)]">{step.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-[var(--muted)]">{step.description}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
+        <SellerApplicationForm />
 
         <section className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-10">
           <div>

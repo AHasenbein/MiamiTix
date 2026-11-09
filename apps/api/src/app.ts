@@ -22,6 +22,7 @@ import { MongoPurchaseRepository } from "./modules/listings/infrastructure/mongo
 import { MongoWishlistRepository } from "./modules/events/infrastructure/mongo-wishlist-repository.js";
 import { MongoFeaturedEventRepository } from "./modules/events/infrastructure/mongo-featured-event-repository.js";
 import { MongoPurchaseRequestRepository } from "./modules/listings/infrastructure/mongo-purchase-request-repository.js";
+import { createSellerApplicationRoutes } from "./modules/seller/presentation/seller-application-routes.js";
 
 export function createApp() {
   const app = express();
@@ -101,6 +102,7 @@ export function createApp() {
   );
   app.use("/api/v1/events", createEventRoutes(eventService, authService, listingService, featuredEventRepository));
   app.use("/api/v1/listings", createListingRoutes(listingService, authService, eventService));
+  app.use("/api/v1/seller-applications", createSellerApplicationRoutes(emailSender));
 
   app.use((error: unknown, req: Request, res: Response, _next: NextFunction) => {
     if (error instanceof HttpError) {

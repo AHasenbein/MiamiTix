@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Unbounded, Yellowtail } from "next/font/google";
+import { Yellowtail } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+// Brand fonts live in /brand/fonts at the repo root (licences alongside).
+// Standing Room Only NF: headlines and logotype. Served unmodified, as its licence requires.
+const display = localFont({
+  src: "../../../../brand/fonts/standing-room-only/StandingRoomOnlyNF.ttf",
+  variable: "--font-display",
+  weight: "400",
+  display: "swap",
 });
 
-// Display face for big headings: wide and geometric, nothing like the usual tight grotesk.
-const unbounded = Unbounded({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["600", "800"],
+// Jost (SIL OFL): body text.
+const body = localFont({
+  src: "../../../../brand/fonts/jost/Jost-VariableFont_wght.ttf",
+  variable: "--font-body",
+  weight: "100 900",
+  display: "swap",
 });
 
 // Neon-sign script, used for a single hero phrase only.
@@ -19,11 +25,6 @@ const yellowtail = Yellowtail({
   variable: "--font-neon",
   subsets: ["latin"],
   weight: "400",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
 });
 
 // Absolute base for og:image and other metadata URLs, required for link previews
@@ -71,7 +72,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} ${unbounded.variable} ${yellowtail.variable} h-full antialiased`}
+      className={`${display.variable} ${body.variable} ${yellowtail.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
