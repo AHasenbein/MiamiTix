@@ -5,7 +5,6 @@ import { EventOfTheMonth } from "@/components/home/EventOfTheMonth";
 import { EventTicker } from "@/components/home/EventTicker";
 import { SearchAutocomplete } from "@/components/search/SearchAutocomplete";
 import { NextEventTicket } from "@/components/home/NextEventTicket";
-import { SellerApplicationForm } from "@/components/home/SellerApplicationForm";
 
 export default function Home() {
   return (
@@ -69,7 +68,8 @@ export default function Home() {
 
         <EventOfTheMonth />
 
-        <SellerApplicationForm />
+        {/* Verified seller application form, switched off for now:
+            <SellerApplicationForm /> from @/components/home/SellerApplicationForm */}
 
         <section className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-10">
           <div>
