@@ -460,7 +460,7 @@ export function EventDetail({ eventId }: EventDetailProps) {
           {cheapestListing && !eventEnded ? (
             <Link
               href={`/listings/${cheapestListing.id}`}
-              className="flex h-16 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#16ff88] text-xl font-semibold text-[#111111] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] sm:h-[4.5rem] sm:text-2xl"
+              className="flex h-16 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#4a7f2c] text-xl font-medium text-white transition-colors hover:bg-[#558f33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] sm:h-[4.5rem] sm:text-2xl"
             >
               Buy <span className="tabular-nums">{formatPrice(cheapestListing.priceCents)}</span>
             </Link>
