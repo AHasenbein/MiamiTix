@@ -7,6 +7,8 @@ export interface Listing {
   eventCity: string;
   eventStartAt: string;
   sellerId: string;
+  /** Seller's first name, when the API knows it. */
+  sellerName?: string;
   title: string;
   seatType: "GA" | "VIP" | "OTHER";
   priceCents: number;

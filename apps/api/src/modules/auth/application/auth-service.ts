@@ -166,6 +166,23 @@ export class AuthService {
     return this.toUserResponse(user);
   }
 
+  /**
+   * Public seller names for listing cards: first name only, so full names and emails never leak.
+   * Unknown or blank names are left out of the map.
+   */
+  async getSellerFirstNames(userIds: string[]): Promise<Map<string, string>> {
+    const uniqueIds = [...new Set(userIds)];
+    const users = await Promise.all(uniqueIds.map((id) => this.userRepository.findById(id)));
+    const names = new Map<string, string>();
+    for (const user of users) {
+      const firstName = user?.displayName.trim().split(/\s+/)[0];
+      if (user && firstName && !firstName.includes("@")) {
+        names.set(user.id, firstName);
+      }
+    }
+    return names;
+  }
+
   async verifyEmail(token: string): Promise<{ message: string }> {
     const tokenHash = this.hashVerificationToken(token);
     const user = await this.userRepository.findByEmailVerificationTokenHash(tokenHash);
