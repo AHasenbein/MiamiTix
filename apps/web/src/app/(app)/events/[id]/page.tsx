@@ -56,8 +56,11 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const { id } = await params;
 
   return (
-    <section className="page-shell flex flex-1 flex-col py-6 sm:py-12">
-      <EventDetail eventId={id} />
-    </section>
+    // isolate keeps the event's color backdrop (-z-10) above the body background.
+    <div className="isolate flex flex-1 flex-col">
+      <section className="page-shell flex flex-1 flex-col py-6 sm:py-12">
+        <EventDetail eventId={id} />
+      </section>
+    </div>
   );
 }

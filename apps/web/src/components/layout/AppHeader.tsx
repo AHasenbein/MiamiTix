@@ -100,8 +100,9 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
 
   return (
     <>
-      {/* Desktop — original header (pre-mobile) */}
-      <header className="sticky top-0 z-30 hidden border-b border-[var(--border)] bg-[var(--background)]/90 backdrop-blur md:block">
+      {/* Desktop — original header (pre-mobile). On the homepage the background takes
+          --feature-dark, sampled from the featured ticket image by FeaturedPalette. */}
+      <header className="sticky top-0 z-30 hidden border-b border-[var(--border)] bg-[var(--feature-dark,var(--background))]/90 backdrop-blur transition-colors duration-700 md:block">
         <div className="page-shell flex h-16 items-center justify-between">
           <Link
             href="/"
@@ -131,7 +132,7 @@ export function AppHeader({ onAuthChange }: AppHeaderProps) {
       </header>
 
       {/* Mobile — button header + bottom nav companion */}
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--background)]/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--feature-dark,var(--background))]/95 transition-colors duration-700 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
         <div className="mx-auto flex w-[min(1180px,94vw)] items-center justify-between gap-2 px-[3vw] pb-1.5 pt-5">
           <div className="flex min-w-0 items-center gap-1">
             {!isHome ? (
