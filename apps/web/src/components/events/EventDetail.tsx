@@ -27,10 +27,8 @@ import { ListingCard } from "../listings/ListingCard";
 import { EventColorBackdrop } from "./EventColorBackdrop";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
-import { ButtonLink } from "../ui/ButtonLink";
 import { EventImagePicker } from "../ui/EventImagePicker";
 import { Input } from "../ui/Input";
-import { SurfaceCard } from "../ui/SurfaceCard";
 
 interface EventDetailProps {
   eventId: string;
@@ -308,103 +306,76 @@ export function EventDetail({ eventId }: EventDetailProps) {
   const shouldShowDescription =
     Boolean(event.description?.trim()) &&
     event.description?.trim() !== "User-submitted event pending schedule confirmation.";
+  const cheapestListing = listings.reduce<Listing | null>(
+    (cheapest, listing) => (!cheapest || listing.priceCents < cheapest.priceCents ? listing : cheapest),
+    null
+  );
+  const canSell = isTrustedSeller && !eventEnded;
+  const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2).replace(/\.00$/, "")}`;
+  const metaLine = [formatEventDateTime(event.startAt) + (eventEnded ? " (ended)" : ""), shouldShowVenue ? event.venue : null]
+    .filter(Boolean)
+    .join(" • ");
+
+  const wishlistButton = (
+    <button
+      type="button"
+      disabled={isUpdatingWishlist}
+      aria-pressed={isWishlisted}
+      onClick={handleToggleWishlist}
+      className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3.5 py-2 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-black/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-60"
+    >
+      <span aria-hidden="true">{isWishlisted ? "★" : "☆"}</span>
+      {isWishlisted ? "Wishlisted" : "Wishlist"}
+    </button>
+  );
 
   return (
-    // Desktop: event ticket on the left (stays in view while scrolling), listings on the right.
-    // The breadcrumb and the listings heading share the first row, so both boxes start level.
-    // Phones and tablets stack everything.
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start lg:gap-x-8">
+    // Desktop: big event image on the left (stays in view while scrolling); title, Buy/Sell and
+    // the ticket list on the right. Phones stack image, then details, then tickets.
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:items-start lg:gap-x-12">
       {/* Colors sampled from the event's image tint the page behind the cards. */}
       <EventColorBackdrop imageUrl={event.imageUrl} />
-      <nav className="flex items-center gap-2 text-sm lg:col-start-1 lg:row-start-1 lg:self-center">
-        <Link href="/events" className="muted-text underline underline-offset-4">
-          Back to events
-        </Link>
-        <span className="muted-text">/</span>
-        <span className="muted-text">Event details</span>
-      </nav>
-      <SurfaceCard className="grid gap-4 p-4 sm:p-6 lg:sticky lg:top-24 lg:col-start-1 lg:row-start-2">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <div className="aspect-square w-full max-w-[14rem] shrink-0 self-start overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] sm:w-56">
-            {event.imageUrl ? (
-              <img
-                alt={`${event.title} event image`}
-                className="h-full w-full object-cover"
-                src={event.imageUrl}
-              />
-            ) : (
-              <div className="h-full w-full bg-[var(--surface-elevated)]" />
-            )}
-          </div>
-          <div className="grid min-w-0 flex-1 gap-2">
-            <p className="tabular text-sm text-[var(--blue-soft)]">
-              {formatEventDateTime(event.startAt)}
-              {eventEnded ? " (ended)" : ""}
-            </p>
-            <h1 className="brand-heading text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-4xl">{event.title}</h1>
-            {event.artists.length ? (
-              <p className="muted-text text-sm">Artists: {event.artists.join(", ")}</p>
-            ) : null}
-            {isEventOfMonth ? (
-              <p className="w-fit rounded-full border border-[var(--pink)] px-2.5 py-0.5 text-xs font-medium text-[var(--pink-soft)]">
-                Event of the Month
-              </p>
-            ) : null}
-            {event.isHouseMusic ? (
-              <p className="text-xs font-medium text-[var(--accent)]">
-                Featured Event
-              </p>
-            ) : null}
-            <p className="muted-text text-sm">
-              {shouldShowVenue ? `${event.venue}, ` : ""}
-              {event.city}
-            </p>
-            {shouldShowDescription ? (
-              <p className="text-sm text-white/90">{event.description}</p>
-            ) : null}
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap">
-          {isTrustedSeller && !eventEnded ? (
-            <ButtonLink
-              href={`/listings/new?eventId=${encodeURIComponent(event.id)}`}
-              className="w-full sm:w-auto"
-            >
-              <span className="sm:hidden">List this event</span>
-              <span className="hidden sm:inline">Trusted sellers: list this event</span>
-            </ButtonLink>
+
+      <div className="grid gap-6 lg:sticky lg:top-24">
+        <div className="relative mx-auto aspect-square w-full max-w-[42rem] overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-elevated)]">
+          {event.imageUrl ? (
+            <img
+              alt={`${event.title} event image`}
+              className="h-full w-full object-cover"
+              src={event.imageUrl}
+            />
           ) : null}
+          {wishlistButton}
+        </div>
+
+        <div className="hidden gap-2 lg:grid">
+          <EventInfo
+            city={event.city}
+            venue={shouldShowVenue ? event.venue : ""}
+            artists={event.artists}
+            description={shouldShowDescription ? event.description : undefined}
+          />
+        </div>
+
+        {isAdmin && !eventEnded ? (
           <Button
             variant="secondary"
             type="button"
-            className="w-full sm:w-auto"
-            disabled={isUpdatingWishlist}
-            aria-pressed={isWishlisted}
-            onClick={handleToggleWishlist}
+            className={`w-full ${isEventOfMonth ? "!border-[var(--pink)] !text-[var(--pink-soft)]" : ""}`}
+            disabled={isUpdatingFeatured}
+            aria-pressed={isEventOfMonth}
+            onClick={handleToggleEventOfMonth}
           >
-            {isWishlisted ? "★ Wishlisted" : "☆ Wishlist"}
+            {isUpdatingFeatured
+              ? "Saving..."
+              : isEventOfMonth
+                ? "✓ Event of the Month"
+                : "Make Event of the Month"}
           </Button>
-          {isAdmin && !eventEnded ? (
-            <Button
-              variant="secondary"
-              type="button"
-              className={`w-full sm:w-auto ${isEventOfMonth ? "!border-[var(--pink)] !text-[var(--pink-soft)]" : ""}`}
-              disabled={isUpdatingFeatured}
-              aria-pressed={isEventOfMonth}
-              onClick={handleToggleEventOfMonth}
-            >
-              {isUpdatingFeatured
-                ? "Saving..."
-                : isEventOfMonth
-                  ? "✓ Event of the Month"
-                  : "Make Event of the Month"}
-            </Button>
-          ) : null}
-        </div>
-        {wishlistMessage ? <Alert tone="info">{wishlistMessage}</Alert> : null}
+        ) : null}
         {featuredMessage ? <Alert tone="info">{featuredMessage}</Alert> : null}
         {canEditEvent ? (
-          <div className="mt-2 grid gap-3">
+          <div className="grid gap-3">
             <Button
               onClick={() => setIsEditFormOpen((current) => !current)}
               type="button"
@@ -414,7 +385,7 @@ export function EventDetail({ eventId }: EventDetailProps) {
             </Button>
             {isEditFormOpen ? (
               <form
-                className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--border)] p-4"
+                className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4"
                 onSubmit={handleEditEvent}
               >
                 <h2 className="brand-heading text-base font-semibold">Edit event</h2>
@@ -464,29 +435,118 @@ export function EventDetail({ eventId }: EventDetailProps) {
             ) : null}
           </div>
         ) : null}
-      </SurfaceCard>
+      </div>
 
-      <section className="grid gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:grid-rows-subgrid lg:gap-y-6">
-        <h2 className="brand-heading text-lg font-semibold lg:self-center">Available ticket listings</h2>
-        <div className="grid content-start gap-3">
+      <div className="grid content-start gap-5">
+        <div className="grid gap-1.5">
+          {isEventOfMonth ? (
+            <p className="w-fit rounded-full border border-[var(--pink)] px-2.5 py-0.5 text-xs font-medium text-[var(--pink-soft)]">
+              Event of the Month
+            </p>
+          ) : null}
+          <h1 className="brand-heading text-4xl font-extrabold leading-tight text-[var(--foreground)] sm:text-5xl">
+            {event.title}
+          </h1>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-base text-[var(--muted)] sm:text-lg">
+            <p>{metaLine}</p>
+            <p className="hidden items-center gap-1.5 text-[var(--foreground)] lg:flex">
+              <PinIcon />
+              {event.city}
+            </p>
+          </div>
+        </div>
+
+        <div className={`grid gap-4 ${canSell ? "grid-cols-2" : "grid-cols-1"}`}>
+          {cheapestListing && !eventEnded ? (
+            <Link
+              href={`/listings/${cheapestListing.id}`}
+              className="flex h-16 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#4a7f2c] text-xl font-medium text-white transition-colors hover:bg-[#558f33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] sm:h-[4.5rem] sm:text-2xl"
+            >
+              Buy <span className="tabular-nums">{formatPrice(cheapestListing.priceCents)}</span>
+            </Link>
+          ) : (
+            <span className="flex h-16 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-xl font-medium text-[var(--muted)] sm:h-[4.5rem] sm:text-2xl">
+              {eventEnded ? "Event ended" : isLoadingListings ? "Buy" : "No tickets yet"}
+            </span>
+          )}
+          {canSell ? (
+            <Link
+              href={`/listings/new?eventId=${encodeURIComponent(event.id)}`}
+              className="flex h-16 items-center justify-center rounded-full bg-white text-xl font-medium text-black transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] sm:h-[4.5rem] sm:text-2xl"
+            >
+              Sell
+            </Link>
+          ) : null}
+        </div>
+        {wishlistMessage ? <Alert tone="info">{wishlistMessage}</Alert> : null}
+
+        <section aria-labelledby="tickets-heading" className="grid gap-1">
+          <h2
+            id="tickets-heading"
+            className="flex h-12 items-center justify-center rounded-full border border-white/70 text-base font-medium text-[var(--foreground)]"
+          >
+            Tickets available
+          </h2>
           {listingsErrorMessage ? <Alert tone="error">{listingsErrorMessage}</Alert> : null}
           {isLoadingListings ? (
-            <p className="muted-text text-sm" role="status" aria-live="polite">
+            <p className="muted-text px-1 py-4 text-sm" role="status" aria-live="polite">
               Loading listings...
             </p>
           ) : listings.length ? (
-            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-1">
-              {listings.map((listing) => (
-                <ListingCard listing={listing} key={listing.id} />
-              ))}
+            <div className="grid">
+              {[...listings]
+                .sort((a, b) => a.priceCents - b.priceCents)
+                .map((listing) => (
+                  <ListingCard listing={listing} imageUrl={event.imageUrl} key={listing.id} />
+                ))}
             </div>
           ) : (
-            <SurfaceCard className="p-3" elevated={false}>
-              <p className="muted-text text-sm">No active listings yet for this event.</p>
-            </SurfaceCard>
+            <p className="muted-text px-1 py-4 text-sm">No active listings yet for this event.</p>
           )}
+        </section>
+
+        <div className="grid gap-2 lg:hidden">
+          <EventInfo
+            city={event.city}
+            venue={shouldShowVenue ? event.venue : ""}
+            artists={event.artists}
+            description={shouldShowDescription ? event.description : undefined}
+          />
         </div>
-      </section>
+      </div>
     </div>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 shrink-0 fill-current">
+      <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z" />
+    </svg>
+  );
+}
+
+/** Venue, city, lineup and description, shown under the image on desktop and after the tickets on phones. */
+function EventInfo({
+  venue,
+  city,
+  artists,
+  description
+}: {
+  venue: string;
+  city: string;
+  artists: string[];
+  description?: string;
+}) {
+  return (
+    <>
+      <h2 className="flex items-center gap-2 text-2xl font-bold text-[var(--foreground)] sm:text-3xl">
+        <PinIcon />
+        {venue || city}
+      </h2>
+      {venue ? <p className="muted-text text-base">{city}</p> : null}
+      {artists.length ? <p className="muted-text text-sm">Artists: {artists.join(", ")}</p> : null}
+      {description ? <p className="text-sm text-white/90">{description}</p> : null}
+    </>
   );
 }

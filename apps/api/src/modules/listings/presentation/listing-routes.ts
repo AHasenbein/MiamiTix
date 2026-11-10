@@ -113,7 +113,15 @@ export function createListingRoutes(
           ? req.query.eventId
           : undefined;
       const listings = await listingService.listListings({ eventId });
-      res.status(200).json({ listings });
+      const sellerNames = await authService.getSellerFirstNames(
+        listings.map((listing) => listing.sellerId)
+      );
+      res.status(200).json({
+        listings: listings.map((listing) => ({
+          ...listing,
+          sellerName: sellerNames.get(listing.sellerId)
+        }))
+      });
     } catch (error) {
       next(error);
     }
@@ -152,7 +160,8 @@ export function createListingRoutes(
   router.get("/:listingId", async (req, res, next) => {
     try {
       const listing = await listingService.getListingById(req.params.listingId);
-      res.status(200).json({ listing });
+      const sellerNames = await authService.getSellerFirstNames([listing.sellerId]);
+      res.status(200).json({ listing: { ...listing, sellerName: sellerNames.get(listing.sellerId) } });
     } catch (error) {
       next(error);
     }
