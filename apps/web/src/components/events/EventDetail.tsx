@@ -336,6 +336,14 @@ export function EventDetail({ eventId }: EventDetailProps) {
       {/* Colors sampled from the event's image tint the page behind the cards. */}
       <EventColorBackdrop imageUrl={event.imageUrl} />
 
+      <Link
+        href="/events"
+        className="inline-flex w-fit items-center gap-2 text-sm font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] lg:col-span-2"
+      >
+        <span aria-hidden="true">←</span>
+        Back to events
+      </Link>
+
       <div className="grid gap-6 lg:sticky lg:top-24">
         <div className="relative mx-auto aspect-square w-full max-w-[42rem] overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-elevated)]">
           {event.imageUrl ? (
