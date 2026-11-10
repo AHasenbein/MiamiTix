@@ -5,13 +5,19 @@ import { EventOfTheMonth } from "@/components/home/EventOfTheMonth";
 import { EventTicker } from "@/components/home/EventTicker";
 import { SearchAutocomplete } from "@/components/search/SearchAutocomplete";
 import { NextEventTicket } from "@/components/home/NextEventTicket";
+import { HeroBackdrop } from "@/components/home/HeroBackdrop";
+import { FeaturedPalette } from "@/components/home/FeaturedPalette";
 
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
+      {/* Tints the header and ticker with colors from the featured ticket image. */}
+      <FeaturedPalette />
       <EventTicker />
 
       <div className="relative isolate">
+        {/* Featured ticket's event image, blurred and dimmed behind the hero. */}
+        <HeroBackdrop />
         {/* Neon palms are switched off for now. To bring them back: <NeonPalms /> from
             @/components/home/NeonPalms (or <Palm tone="blue" /> inside the wordmark). */}
         <section className="page-shell grid items-center gap-10 py-12 sm:py-20 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start lg:gap-16 lg:pb-28 lg:pt-12">

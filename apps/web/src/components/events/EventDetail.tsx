@@ -24,6 +24,7 @@ import { listListings } from "@/lib/api/listings";
 import { readAuthToken } from "@/lib/auth/token-storage";
 import { formatEventDateTime, hasEventStarted, toDateTimeLocalValue } from "@/lib/datetime";
 import { ListingCard } from "../listings/ListingCard";
+import { EventColorBackdrop } from "./EventColorBackdrop";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { ButtonLink } from "../ui/ButtonLink";
@@ -309,15 +310,20 @@ export function EventDetail({ eventId }: EventDetailProps) {
     event.description?.trim() !== "User-submitted event pending schedule confirmation.";
 
   return (
-    <div className="grid gap-6">
-      <nav className="flex items-center gap-2 text-sm">
+    // Desktop: event ticket on the left (stays in view while scrolling), listings on the right.
+    // The breadcrumb and the listings heading share the first row, so both boxes start level.
+    // Phones and tablets stack everything.
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start lg:gap-x-8">
+      {/* Colors sampled from the event's image tint the page behind the cards. */}
+      <EventColorBackdrop imageUrl={event.imageUrl} />
+      <nav className="flex items-center gap-2 text-sm lg:col-start-1 lg:row-start-1 lg:self-center">
         <Link href="/events" className="muted-text underline underline-offset-4">
           Back to events
         </Link>
         <span className="muted-text">/</span>
         <span className="muted-text">Event details</span>
       </nav>
-      <SurfaceCard className="grid gap-4 p-4 sm:p-6">
+      <SurfaceCard className="grid gap-4 p-4 sm:p-6 lg:sticky lg:top-24 lg:col-start-1 lg:row-start-2">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           <div className="aspect-square w-full max-w-[14rem] shrink-0 self-start overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] sm:w-56">
             {event.imageUrl ? (
@@ -460,24 +466,26 @@ export function EventDetail({ eventId }: EventDetailProps) {
         ) : null}
       </SurfaceCard>
 
-      <section className="grid gap-3">
-        <h2 className="brand-heading text-lg font-semibold">Available ticket listings</h2>
-        {listingsErrorMessage ? <Alert tone="error">{listingsErrorMessage}</Alert> : null}
-        {isLoadingListings ? (
-          <p className="muted-text text-sm" role="status" aria-live="polite">
-            Loading listings...
-          </p>
-        ) : listings.length ? (
-          <div className="grid gap-2 md:grid-cols-2">
-            {listings.map((listing) => (
-              <ListingCard listing={listing} key={listing.id} />
-            ))}
-          </div>
-        ) : (
-          <SurfaceCard className="p-3" elevated={false}>
-            <p className="muted-text text-sm">No active listings yet for this event.</p>
-          </SurfaceCard>
-        )}
+      <section className="grid gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:grid-rows-subgrid lg:gap-y-6">
+        <h2 className="brand-heading text-lg font-semibold lg:self-center">Available ticket listings</h2>
+        <div className="grid content-start gap-3">
+          {listingsErrorMessage ? <Alert tone="error">{listingsErrorMessage}</Alert> : null}
+          {isLoadingListings ? (
+            <p className="muted-text text-sm" role="status" aria-live="polite">
+              Loading listings...
+            </p>
+          ) : listings.length ? (
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-1">
+              {listings.map((listing) => (
+                <ListingCard listing={listing} key={listing.id} />
+              ))}
+            </div>
+          ) : (
+            <SurfaceCard className="p-3" elevated={false}>
+              <p className="muted-text text-sm">No active listings yet for this event.</p>
+            </SurfaceCard>
+          )}
+        </div>
       </section>
     </div>
   );
